@@ -1,7 +1,67 @@
+# Python
 __pycache__/
 *.py[cod]
-.out/
-out/quotes.csv
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
 .env
-.DS_Store
 .venv
+venv/
+ENV/
+env/
+
+# Data files
+out/
+*.csv
+data/
+spotify_episode_mapping.csv
+episode_mapping.csv
+episode_mapping.json
+
+# Cache and temporary files
+.cache/
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Local development
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
