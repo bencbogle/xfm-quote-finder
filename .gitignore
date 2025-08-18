@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.out/
+out/quotes.csv
+.env
+.DS_Store
+.venv
