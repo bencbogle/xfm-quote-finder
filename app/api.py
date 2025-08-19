@@ -4,18 +4,34 @@ FastAPI server for XFM Quote Finder.
 Provides a simple HTTP API wrapper around the search functionality.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import logging
+import sqlite3
+import time
 from typing import List, Dict, Any
 import uvicorn
 
-from .search_core import search_quotes
+from .search_core import search_quotes, DB_PATH
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def log_search(q: str, top_k: int, ip: str, ua: str):
+    """Log search queries to SQLite database."""
+    try:
+        con = sqlite3.connect(DB_PATH)
+        cur = con.cursor()
+        cur.execute(
+            "INSERT INTO search_log(ts, q, topk, ip, user_agent) VALUES (?,?,?,?,?)",
+            (int(time.time()), q, top_k, ip, ua[:255]),
+        )
+        con.commit()
+        con.close()
+    except Exception as e:
+        logger.warning(f"Failed to log search: {e}")
 
 # Create FastAPI app
 app = FastAPI(
@@ -39,7 +55,7 @@ async def root():
     return {"message": "XFM Quote Finder API", "status": "healthy"}
 
 @app.get("/search")
-async def search_endpoint(q: str, limit: int = 5, speaker: str = None):
+async def search_endpoint(request: Request, q: str, limit: int = 10, speaker: str = None):
     """
     Search for quotes.
     
@@ -62,7 +78,7 @@ async def search_endpoint(q: str, limit: int = 5, speaker: str = None):
         logger.info(f"Search request: '{q}' (limit: {limit}, speaker: {speaker_filter or 'all'})")
         
         # Use existing search logic
-        results = search_quotes(q, top_k=limit, min_score=80, speaker_filter=speaker_filter)
+        results = search_quotes(q, top_k=limit, min_score=85, speaker_filter=speaker_filter)
         
 
         
@@ -70,7 +86,6 @@ async def search_endpoint(q: str, limit: int = 5, speaker: str = None):
         formatted_results = []
         for result in results:
             formatted_results.append({
-                "score": result["score"],
                 "episode_id": result["episode_id"],
                 "episode_name": result["episode_name"],
                 "timestamp_sec": result["timestamp_sec"],
@@ -81,6 +96,14 @@ async def search_endpoint(q: str, limit: int = 5, speaker: str = None):
             })
         
         logger.info(f"Found {len(formatted_results)} results for '{q}'")
+        
+        # Log the search (best effort, don't block on failures)
+        try:
+            ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "")
+            ua = request.headers.get("user-agent", "")
+            log_search(q, limit, ip, ua)
+        except Exception as e:
+            logger.warning(f"Failed to log search: {e}")
         
         return {
             "query": q,
@@ -97,19 +120,27 @@ async def search_endpoint(q: str, limit: int = 5, speaker: str = None):
 async def get_stats():
     """Get basic statistics about the search data."""
     try:
-        from .search_core import load_rows
-        rows = load_rows()
-        
-        # Count episodes
-        episodes = set(row["episode_id"] for row in rows)
+        con = sqlite3.connect(DB_PATH)
+        cur = con.cursor()
         
         # Count quotes
-        total_quotes = len(rows)
+        cur.execute("SELECT COUNT(*) FROM quotes")
+        total_quotes = cur.fetchone()[0]
+        
+        # Count unique episodes
+        cur.execute("SELECT COUNT(DISTINCT episode_id) FROM quotes")
+        unique_episodes = cur.fetchone()[0]
+        
+        # Get list of episodes
+        cur.execute("SELECT DISTINCT episode_id FROM quotes ORDER BY episode_id")
+        episodes = [row[0] for row in cur.fetchall()]
+        
+        con.close()
         
         return {
             "total_quotes": total_quotes,
-            "unique_episodes": len(episodes),
-            "episodes": list(episodes)
+            "unique_episodes": unique_episodes,
+            "episodes": episodes
         }
         
     except Exception as e:

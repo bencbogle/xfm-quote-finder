@@ -84,21 +84,21 @@ def convert_episode_name_to_spotify_format(episode_id: str) -> str:
         return f"{series_episode} | Remastered"
     
     elif episode_id.startswith("guide-"):
-        # guide-s1e01 -> TRGS Guide to... Medicine
+        # guide-s1e1 -> TRGS Guide to... Medicine
         # We need to map guide episodes by their specific names
         guide_mapping = {
-            "guide-s1e01": "TRGS Guide to... Medicine",
-            "guide-s1e02": "TRGS Guide to... Natural History", 
-            "guide-s1e03": "TRGS Guide to... The Arts",
-            "guide-s1e04": "TRGS Guide to... Philosophy",
-            "guide-s1e05": "TRGS Guide to... Society",
-            "guide-s2e01": "TRGS Guide to... The English",
-            "guide-s2e02": "TRGS Guide to... The Future",
-            "guide-s2e03": "TRGS Guide to... Law & Order",
-            "guide-s2e04": "TRGS Guide to... The Earth",
-            "guide-s2e05": "TRGS Guide to... The Human Body",
-            "guide-s2e06": "TRGS Guide to... The World Cup",
-            "guide-s2e07": "TRGS Guide to... Armed Forces",
+            "guide-s1e1": "TRGS Guide to... Medicine",
+            "guide-s1e2": "TRGS Guide to... Natural History", 
+            "guide-s1e3": "TRGS Guide to... The Arts",
+            "guide-s1e4": "TRGS Guide to... Philosophy",
+            "guide-s1e5": "TRGS Guide to... Society",
+            "guide-s2e1": "TRGS Guide to... The English",
+            "guide-s2e2": "TRGS Guide to... The Future",
+            "guide-s2e3": "TRGS Guide to... Law & Order",
+            "guide-s2e4": "TRGS Guide to... The Earth",
+            "guide-s2e5": "TRGS Guide to... The Human Body",
+            "guide-s2e6": "TRGS Guide to... The World Cup",
+            "guide-s2e7": "TRGS Guide to... Armed Forces",
         }
         return guide_mapping.get(episode_id, "")
     
@@ -187,6 +187,9 @@ def main():
             metadata = j.get("metadata", {})
             
             for item in j.get("transcript", []) or []:
+                # Only include chat type entries (filter out gap, song, unknown)
+                if item.get("type") != "chat":
+                    continue
                 text = (item.get("content") or "").strip()
                 if not text:
                     continue

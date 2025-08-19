@@ -1,0 +1,125 @@
+import { useState, useEffect, useCallback } from 'react'
+import Header from './components/Header'
+import SearchBar from './components/SearchBar'
+import SpeakerFilter from './components/SpeakerFilter'
+import StatsBar from './components/StatsBar'
+import ResultsList from './components/ResultsList'
+import LoadingSkeleton from './components/LoadingSkeleton'
+import EmptyState from './components/EmptyState'
+import Toast from './components/Toast'
+import Footer from './components/Footer'
+import { SearchResult, SearchState } from './types'
+import { searchQuotes } from './api'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+function App() {
+  const [searchState, setSearchState] = useState<SearchState>('idle')
+  const [query, setQuery] = useState('')
+  const [speakerFilter, setSpeakerFilter] = useState('')
+  const [results, setResults] = useState<SearchResult[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [stats, setStats] = useState<{ total_quotes: number; unique_episodes: number } | null>(null)
+
+  // Load stats on mount
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/stats`)
+        if (response.ok) {
+          const data = await response.json()
+          setStats(data)
+        }
+      } catch (err) {
+        console.error('Failed to load stats:', err)
+      }
+    }
+    loadStats()
+  }, [])
+
+  // Search function
+  const handleSearch = useCallback(async (searchQuery: string, speaker?: string) => {
+    if (!searchQuery.trim()) return
+
+    setSearchState('loading')
+    setError(null)
+
+    try {
+      const data = await searchQuotes(searchQuery, speaker, API_BASE_URL)
+      setResults(data.results)
+      setSearchState(data.results.length > 0 ? 'success' : 'empty')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Search failed')
+      setSearchState('error')
+    }
+  }, [])
+
+  // Keyboard shortcuts
+  const { searchInputRef } = useKeyboardShortcuts({
+    onSearch: () => handleSearch(query, speakerFilter)
+  })
+
+  const handleSearchSubmit = (searchQuery: string) => {
+    setQuery(searchQuery)
+    handleSearch(searchQuery, speakerFilter)
+  }
+
+  const handleHomeClick = () => {
+    setSearchState('idle')
+    setQuery('')
+    setResults([])
+    setError(null)
+  }
+
+  const handleSpeakerChange = (speaker: string) => {
+    setSpeakerFilter(speaker)
+    if (query.trim()) {
+      handleSearch(query, speaker)
+    }
+  }
+
+  const clearError = () => setError(null)
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        <Header onClick={handleHomeClick} />
+        
+        <div className="space-y-8">
+          <div className="space-y-6">
+            <SearchBar 
+              ref={searchInputRef}
+              onSearch={handleSearchSubmit}
+              placeholder="Enter a quote to search for..."
+            />
+            <SpeakerFilter 
+              value={speakerFilter}
+              onChange={handleSpeakerChange}
+            />
+          </div>
+
+
+
+          <div aria-live="polite" aria-atomic="false">
+            {searchState === 'loading' && <LoadingSkeleton />}
+            {searchState === 'success' && <ResultsList results={results} query={query} />}
+            {searchState === 'empty' && <EmptyState query={query} />}
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <Toast 
+          message={error} 
+          type="error" 
+          onClose={clearError}
+        />
+      )}
+      
+      <Footer />
+    </div>
+  )
+}
+
+export default App

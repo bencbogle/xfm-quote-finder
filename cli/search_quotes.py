@@ -24,7 +24,7 @@ def main():
         print(f"Invalid speaker. Must be one of: {', '.join(valid_speakers)}")
         raise SystemExit(1)
     
-    results = search_quotes(query, top_k=5, min_score=70, speaker_filter=speaker_filter)
+    results = search_quotes(query, top_k=10, min_score=85, speaker_filter=speaker_filter)
 
     if not results:
         print("No good matches found.")
