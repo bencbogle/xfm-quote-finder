@@ -11,7 +11,9 @@ RUN pip install uvicorn[standard]
 COPY . .
 # Create out directory if it doesn't exist
 RUN mkdir -p out
+# Create startup script
+RUN echo '#!/bin/bash\npython -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}' > /app/start.sh && chmod +x /app/start.sh
 # Expose port
 EXPOSE 8000
 # Run the application
-CMD ["sh", "-c", "python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["/app/start.sh"]
