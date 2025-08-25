@@ -17,13 +17,13 @@ A React + FastAPI application for searching through XFM episodes, podcasts, and 
 
 2. **Set up the database:**
    ```bash
-   python scripts/csv_to_sqlite.py
+   uv run python scripts/csv_to_sqlite.py
    ```
 
 3. **Run the development servers:**
    ```bash
    # Terminal 1: Backend
-   python -m uvicorn app.main:app --reload
+   uv run python -m uvicorn app.main:app --reload
    
    # Terminal 2: Frontend
    npm run dev
@@ -104,7 +104,7 @@ The application uses SQLite with FTS5 for full-text search. To set up the databa
 
 ```bash
 # Run Python tests
-pytest
+uv run pytest
 
 # Run frontend tests (if configured)
 npm test
