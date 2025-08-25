@@ -7,13 +7,5 @@ healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 
-[build.steps]
-- name = "Install Node.js dependencies"
-  command = "npm install"
-- name = "Build frontend"
-  command = "npm run build"
-- name = "Install Python dependencies"
-  command = "uv sync"
-
 [[services]]
 name = "xfm-quote-finder"
