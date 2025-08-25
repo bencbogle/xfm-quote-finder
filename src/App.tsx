@@ -2,17 +2,14 @@ import { useState, useEffect, useCallback } from 'react'
 import Header from './components/Header'
 import SearchBar from './components/SearchBar'
 import SpeakerFilter from './components/SpeakerFilter'
-import StatsBar from './components/StatsBar'
 import ResultsList from './components/ResultsList'
 import LoadingSkeleton from './components/LoadingSkeleton'
 import EmptyState from './components/EmptyState'
 import Toast from './components/Toast'
 import Footer from './components/Footer'
 import { SearchResult, SearchState } from './types'
-import { searchQuotes } from './api'
+import { searchQuotes, getStats } from './api'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 function App() {
   const [searchState, setSearchState] = useState<SearchState>('idle')
@@ -20,17 +17,12 @@ function App() {
   const [speakerFilter, setSpeakerFilter] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [stats, setStats] = useState<{ total_quotes: number; unique_episodes: number } | null>(null)
 
   // Load stats on mount
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/stats`)
-        if (response.ok) {
-          const data = await response.json()
-          setStats(data)
-        }
+        await getStats()
       } catch (err) {
         console.error('Failed to load stats:', err)
       }
@@ -46,7 +38,7 @@ function App() {
     setError(null)
 
     try {
-      const data = await searchQuotes(searchQuery, speaker, API_BASE_URL)
+      const data = await searchQuotes(searchQuery, 10, speaker)
       setResults(data.results)
       setSearchState(data.results.length > 0 ? 'success' : 'empty')
     } catch (err) {
@@ -56,9 +48,7 @@ function App() {
   }, [])
 
   // Keyboard shortcuts
-  const { searchInputRef } = useKeyboardShortcuts({
-    onSearch: () => handleSearch(query, speakerFilter)
-  })
+  const { searchInputRef } = useKeyboardShortcuts()
 
   const handleSearchSubmit = (searchQuery: string) => {
     setQuery(searchQuery)
@@ -103,7 +93,9 @@ function App() {
 
           <div aria-live="polite" aria-atomic="false">
             {searchState === 'loading' && <LoadingSkeleton />}
-            {searchState === 'success' && <ResultsList results={results} query={query} />}
+            {searchState === 'success' && (
+              <ResultsList results={results} />
+            )}
             {searchState === 'empty' && <EmptyState query={query} />}
           </div>
         </div>

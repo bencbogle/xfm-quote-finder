@@ -1,54 +1,64 @@
 import { SearchResult } from '../types'
-import { copySpotifyLink } from '../api'
-import { useState } from 'react'
 
 interface ResultCardProps {
   result: SearchResult
-  query: string
 }
 
-export default function ResultCard({ result, query }: ResultCardProps) {
+const getSpeakerImage = (speaker: string) => {
+  switch (speaker.toLowerCase()) {
+    case 'ricky':
+      return '/ricky.png'
+    case 'steve':
+      return '/steve.png'
+    case 'karl':
+      return '/karl2.png'
+    default:
+      return null
+  }
+}
 
-
-
+export default function ResultCard({ result }: ResultCardProps) {
   const handleSpotifyClick = () => {
-    window.open(result.spotify_url, '_blank', 'noopener,noreferrer')
+    if (result.spotify_url) {
+      window.open(result.spotify_url, '_blank')
+    }
   }
 
-  const capitalizedSpeaker = result.speaker.charAt(0).toUpperCase() + result.speaker.slice(1)
+  const speakerImage = getSpeakerImage(result.speaker)
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-      <div className="flex gap-4">
-        {/* Left column */}
-        <div className="flex-shrink-0 w-48">
-          <div className="font-semibold text-slate-900">{capitalizedSpeaker}</div>
-          <div className="font-mono text-sm text-slate-600">{result.timestamp_hms}</div>
-          <div className="text-sm text-slate-500 mt-1">
-            {result.episode_id}
-            {result.episode_name && ` — ${result.episode_name}`}
-          </div>
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h3 className="font-medium text-slate-900 mb-1">
+            {result.episode_name || result.episode_id}
+          </h3>
+          <p className="text-sm text-slate-500">
+            {result.timestamp_hms} • {result.speaker}
+          </p>
         </div>
-
-        {/* Main content */}
-        <div className="flex-1">
-          <div className="text-slate-900 leading-relaxed mb-4">
-            {result.text}
-          </div>
-          
+        <div className="flex items-center gap-3">
+          {speakerImage && (
+            <img 
+              src={speakerImage} 
+              alt={result.speaker}
+              className="w-8 h-8 rounded-full object-cover"
+            />
+          )}
           {result.spotify_url && (
             <button
               onClick={handleSpotifyClick}
-              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-              aria-label="Open Spotify link in new tab"
+              className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
             >
-              🎵 Listen on Spotify
+              Listen on Spotify
             </button>
           )}
         </div>
-
-
       </div>
+      
+      <blockquote className="text-slate-700 leading-relaxed">
+        "{result.text}"
+      </blockquote>
     </div>
   )
 }

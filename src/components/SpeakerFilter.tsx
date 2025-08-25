@@ -11,9 +11,9 @@ export default function SpeakerFilter({ value, onChange }: SpeakerFilterProps) {
 
   const speakers = [
     { value: '', label: 'All speakers', icon: '👥' },
-    { value: 'ricky', label: 'Ricky', icon: '🎭' },
-    { value: 'steve', label: 'Steve', icon: '🎬' },
-    { value: 'karl', label: 'Karl', icon: '🧠' }
+    { value: 'ricky', label: 'Ricky', icon: '/ricky.png' },
+    { value: 'steve', label: 'Steve', icon: '/steve.png' },
+    { value: 'karl', label: 'Karl', icon: '/karl2.png' }
   ]
 
   const selectedSpeaker = speakers.find(s => s.value === value) || speakers[0]
@@ -29,6 +29,19 @@ export default function SpeakerFilter({ value, onChange }: SpeakerFilterProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  const renderIcon = (speaker: typeof speakers[0]) => {
+    if (speaker.value === '') {
+      return <span className="text-base">{speaker.icon}</span>
+    }
+    return (
+      <img 
+        src={speaker.icon} 
+        alt={speaker.label}
+        className="w-6 h-6 rounded-full object-cover"
+      />
+    )
+  }
+
   return (
     <div className="flex items-center gap-3">
       <label className="text-sm font-medium text-slate-700">
@@ -40,7 +53,7 @@ export default function SpeakerFilter({ value, onChange }: SpeakerFilterProps) {
           className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 min-w-[140px]"
           aria-label="Filter by speaker"
         >
-          <span className="text-base">{selectedSpeaker.icon}</span>
+          {renderIcon(selectedSpeaker)}
           <span className="flex-1 text-left">{selectedSpeaker.label}</span>
           <svg 
             className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
@@ -65,7 +78,7 @@ export default function SpeakerFilter({ value, onChange }: SpeakerFilterProps) {
                   value === speaker.value ? 'bg-emerald-50 text-emerald-700 border-r-2 border-emerald-500' : 'text-slate-700'
                 }`}
               >
-                <span className="text-base">{speaker.icon}</span>
+                {renderIcon(speaker)}
                 <span className="flex-1">{speaker.label}</span>
                 {value === speaker.value && (
                   <svg className="h-4 w-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">

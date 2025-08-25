@@ -10,8 +10,12 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        // Don't rewrite the path - keep /api prefix
       }
     }
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets'
   }
 })

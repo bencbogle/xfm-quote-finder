@@ -1,24 +1,36 @@
-import { SearchResponse } from './types'
+import { SearchResponse, StatsResponse } from './types'
 
-export async function searchQuotes(
-  query: string, 
-  speaker?: string, 
-  baseUrl: string = 'http://localhost:8000'
-): Promise<SearchResponse> {
-  const url = new URL('/search', baseUrl)
-  url.searchParams.set('q', query)
+// In development, use the proxy to localhost:8000
+// In production, use relative paths
+const API_BASE = (import.meta as any).env?.PROD ? '' : '/api';
+
+export async function searchQuotes(query: string, limit: number = 10, speaker?: string): Promise<SearchResponse> {
+  const params = new URLSearchParams({
+    q: query,
+    top_k: limit.toString(),
+  });
   
   if (speaker) {
-    url.searchParams.set('speaker', speaker)
+    params.append('speaker', speaker);
   }
 
-  const response = await fetch(url.toString())
+  const response = await fetch(`${API_BASE}/search?${params}`);
   
   if (!response.ok) {
-    throw new Error(`Search failed: ${response.status}`)
+    throw new Error(`Search failed: ${response.statusText}`);
   }
+  
+  return response.json();
+}
 
-  return response.json()
+export async function getStats(): Promise<StatsResponse> {
+  const response = await fetch(`${API_BASE}/stats`);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to get stats: ${response.statusText}`);
+  }
+  
+  return response.json();
 }
 
 export function copySpotifyLink(url: string): Promise<void> {

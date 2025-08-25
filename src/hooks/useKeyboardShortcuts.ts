@@ -1,16 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useRef, useEffect } from 'react'
 
-interface KeyboardShortcutsProps {
-  onSearch: () => void
-}
-
-export function useKeyboardShortcuts({ onSearch }: KeyboardShortcutsProps) {
+export function useKeyboardShortcuts() {
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Focus search on '/' key (but not when already in an input)
-      if (event.key === '/' && !event.target?.matches('input, textarea')) {
+      if (event.key === '/' && !(event.target as HTMLElement)?.matches('input, textarea')) {
         event.preventDefault()
         searchInputRef.current?.focus()
       }

@@ -1,5 +1,3 @@
-import React from 'react'
-
 export default function Footer() {
   return (
     <footer className="mt-16 pt-8 border-t border-slate-200">
@@ -35,6 +33,16 @@ export default function Footer() {
             Rhondson
           </a>
           {' '}for remastering the episodes.
+        </p>
+        <p className="mt-2">
+          <a 
+            href="https://github.com/bencbogle/xfm-quote-finder" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-slate-500 hover:text-slate-700 underline"
+          >
+            View on GitHub
+          </a>
         </p>
       </div>
     </footer>

@@ -21,6 +21,12 @@ export interface Stats {
   unique_episodes: number
 }
 
+export interface StatsResponse {
+  total_quotes: number
+  unique_episodes: number
+  episodes: string[]
+}
+
 export interface ToastProps {
   message: string
   type: 'error' | 'success'

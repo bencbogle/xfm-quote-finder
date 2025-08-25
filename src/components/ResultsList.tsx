@@ -3,10 +3,9 @@ import ResultCard from './ResultCard'
 
 interface ResultsListProps {
   results: SearchResult[]
-  query: string
 }
 
-export default function ResultsList({ results, query }: ResultsListProps) {
+export default function ResultsList({ results }: ResultsListProps) {
   return (
     <div className="space-y-4">
       <div className="text-sm text-slate-600">
@@ -17,7 +16,6 @@ export default function ResultsList({ results, query }: ResultsListProps) {
           <ResultCard 
             key={`${result.episode_id}-${result.timestamp_sec}-${index}`}
             result={result} 
-            query={query}
           />
         ))}
       </div>

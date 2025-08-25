@@ -1,59 +1,115 @@
 # XFM Quote Finder
 
-Search through XFM episodes, podcasts, and guides to find your favorite quotes and get direct Spotify links.
+A React + FastAPI application for searching through XFM episodes, podcasts, and guides using SQLite FTS5 full-text search.
 
-## 🎯 What is this?
+## Quick Start
 
-A fast, searchable database of quotes from:
-- **XFM Radio Show** (Seasons 0-4)
-- **The Ricky Gervais Show Podcast** (Seasons 1-5) 
-- **Guide To... Series** (Seasons 1-2)
+### Local Development
 
-## ✨ Features
+1. **Install dependencies:**
+   ```bash
+   # Frontend
+   npm install
+   
+   # Backend
+   uv sync
+   ```
 
-- 🔍 **Fast search** - Find quotes instantly with smart matching
-- 🎵 **Spotify integration** - Direct links to episode timestamps
-- 👥 **Speaker filtering** - Search by Ricky, Steve, or Karl
-- ⌨️ **Keyboard shortcuts** - Press `/` to focus search
-- 📱 **Mobile friendly** - Works on all devices
-- 🎨 **Clean design** - Minimal, modern interface
+2. **Set up the database:**
+   ```bash
+   python scripts/csv_to_sqlite.py
+   ```
 
-## 🚀 How to use
+3. **Run the development servers:**
+   ```bash
+   # Terminal 1: Backend
+   python -m uvicorn app.main:app --reload
+   
+   # Terminal 2: Frontend
+   npm run dev
+   ```
 
-1. **Type a quote** - Enter any part of what you remember
-2. **Get results** - See matching quotes with timestamps
-3. **Click Spotify** - Open the exact moment in Spotify
-4. **Filter speakers** - Use the dropdown to search specific people
+4. **Open your browser:**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
 
-### Search Tips
+### Railway Deployment
 
-- **Don't worry about punctuation** - "don't worry" finds "dont worry"
-- **Partial quotes work** - "monkey" finds "monkey news"
-- **Case doesn't matter** - "KARL" finds "karl"
-- **Try different words** - "chimp" finds "chimpanzee"
+1. **Connect your GitHub repository to Railway:**
+   - Go to [Railway](https://railway.app)
+   - Create a new project
+   - Connect your GitHub repository
 
-### Examples
+2. **Set environment variables in Railway:**
+   - `DATABASE_PATH`: `/data/quotes.db` (Railway persistent storage)
+   - `PORT`: `8000` (Railway will set this automatically)
 
-- `"parrot's blood"` → Finds the famous blood transfusion story
-- `"monkey news"` → Finds Karl's monkey news segments  
-- `"don't worry"` → Finds various "don't worry" moments
-- `"Scrimpton"` → Finds references to Scrimpton
+3. **Deploy:**
+   - Railway will automatically detect the Python/FastAPI setup
+   - The build process will install dependencies and build the frontend
+   - Your app will be available at the provided Railway URL
 
-## 🎵 Spotify Integration
+4. **Database setup:**
+   - Upload your `quotes.db` file to Railway's persistent storage
+   - Or run the database setup scripts in Railway's console
 
-Every result includes a **"Listen on Spotify"** button that:
-- Opens the exact timestamp in Spotify
-- Works on mobile and desktop
-- Links to the remastered episodes
+## Features
 
-## Credits
+- **Full-text search** using SQLite FTS5
+- **Speaker filtering** (Ricky, Steve, Karl)
+- **Episode information** with Spotify links
+- **Modern React UI** with Tailwind CSS
+- **FastAPI backend** with automatic API documentation
 
-This project wouldn't be possible without:
+## Tech Stack
 
-- **Transcripts** by [Scrimpton](https://scrimpton.com/search) - Complete episode transcripts
-- **Spotify uploads** by [RSK XFM (Pilky01)](https://open.spotify.com/show/34mXWuUCEa2UzTft5vxxLp?si=9caac35d12284346) - Ad-free episode hosting
-- **Audio remastering** by [Rhondson](https://www.reddit.com/user/Rhondson/) - High-quality audio restoration
+- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS
+- **Backend:** FastAPI, SQLite with FTS5, Uvicorn
+- **Deployment:** Railway (full-stack hosting)
+- **Search:** SQLite FTS5 full-text search engine
 
-## For Developers
+## API Endpoints
 
-This is a React + FastAPI application with SQLite FTS5 search. See the code for technical details.
+- `GET /api/search?q=<query>&top_k=<limit>&speaker=<speaker>` - Search quotes
+- `GET /api/health` - Health check
+- `GET /api/stats` - Get database statistics
+
+## Development
+
+### Project Structure
+
+```
+xfm-quote-finder/
+├── app/                 # FastAPI backend
+│   ├── main.py         # Main application entry point
+│   ├── search_core.py  # Search functionality
+│   └── api.py          # API endpoints
+├── src/                # React frontend
+│   ├── components/     # React components
+│   ├── hooks/          # Custom React hooks
+│   └── types.ts        # TypeScript types
+├── scripts/            # Utility scripts
+├── data/               # Data files
+└── tests/              # Test files
+```
+
+### Database Setup
+
+The application uses SQLite with FTS5 for full-text search. To set up the database:
+
+1. Run `python scripts/csv_to_sqlite.py` to create the database
+2. The database will be created at `out/quotes.db`
+
+### Testing
+
+```bash
+# Run Python tests
+pytest
+
+# Run frontend tests (if configured)
+npm test
+```
+
+## License
+
+This project is for educational and personal use.

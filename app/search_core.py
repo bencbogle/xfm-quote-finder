@@ -1,9 +1,11 @@
 # SQLite-based search with FTS5 full-text search
 import sqlite3
+import os
 from pathlib import Path
 from typing import List, Dict, Any
 
-DB_PATH = Path("out/quotes.db")
+# Use environment variable for database path in production
+DB_PATH = Path(os.getenv("DATABASE_PATH", "out/quotes.db"))
 
 def fmt_time(sec: int) -> str:
     """Format seconds as HH:MM:SS."""
