@@ -17,6 +17,54 @@ const getSpeakerImage = (speaker: string) => {
   }
 }
 
+const formatEpisodeDisplay = (episodeId: string, episodeName: string): string => {
+  // Parse episode_id format: xfm-s2e32, podcast-s1e1, guide-s1e1
+  const match = episodeId.match(/^(\w+)-s(\d+)e(\d+)$/)
+  
+  if (!match) {
+    // Fallback for unexpected format
+    return episodeName || episodeId
+  }
+  
+  const [, publication, series, episode] = match
+  
+  // Determine display name based on publication type
+  let displayPrefix: string
+  switch (publication) {
+    case 'xfm':
+      displayPrefix = 'XFM'
+      break
+    case 'podcast':
+      displayPrefix = 'Podcast'
+      break
+    case 'guide':
+      displayPrefix = 'Podcast'
+      break
+    default:
+      displayPrefix = publication.charAt(0).toUpperCase() + publication.slice(1)
+  }
+  
+  // Format series and episode
+  const seriesDisplay = `Series ${series} Episode ${episode}`
+  
+  // For guide episodes, just show the episode name without series/episode numbers
+  if (publication === 'guide' && episodeName && episodeName.trim() !== '') {
+    return `${displayPrefix} | ${episodeName}`
+  }
+  
+  // For XFM episodes, always show just series/episode (no episode name)
+  if (publication === 'xfm') {
+    return `${displayPrefix} | ${seriesDisplay}`
+  }
+  
+  // For other cases (podcast), include the episode name if available
+  if (episodeName && episodeName.trim() !== '') {
+    return `${displayPrefix} | ${seriesDisplay}: ${episodeName}`
+  } else {
+    return `${displayPrefix} | ${seriesDisplay}`
+  }
+}
+
 export default function ResultCard({ result }: ResultCardProps) {
   const handleSpotifyClick = () => {
     if (result.spotify_url) {
@@ -31,7 +79,7 @@ export default function ResultCard({ result }: ResultCardProps) {
       <div className="flex justify-between items-start mb-4">
         <div>
           <h3 className="font-medium text-slate-900 mb-1">
-            {result.episode_name || result.episode_id}
+            {formatEpisodeDisplay(result.episode_id, result.episode_name)}
           </h3>
           <p className="text-sm text-slate-500">
             {result.timestamp_hms} • {result.speaker}

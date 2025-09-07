@@ -41,52 +41,101 @@ def get_db_session():
 
 def init_database():
     """Initialize database tables and indexes."""
+    is_postgres = "postgresql" in DATABASE_URL.lower()
+    
     with get_db_session() as session:
-        # Create quotes table with optimized indexes
-        session.execute(text("""
-            CREATE TABLE IF NOT EXISTS quotes (
-                id SERIAL PRIMARY KEY,
-                episode_id VARCHAR(50) NOT NULL,
-                timestamp_sec INTEGER NOT NULL,
-                speaker VARCHAR(20) NOT NULL,
-                text TEXT NOT NULL,
-                episode_name TEXT,
-                spotify_url TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        """))
+        if is_postgres:
+            # PostgreSQL schema
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS quotes (
+                    id SERIAL PRIMARY KEY,
+                    episode_id VARCHAR(50) NOT NULL,
+                    timestamp_sec INTEGER NOT NULL,
+                    speaker VARCHAR(20) NOT NULL,
+                    text TEXT NOT NULL,
+                    episode_name TEXT,
+                    spotify_url TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+            
+            # PostgreSQL indexes
+            session.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_quotes_speaker 
+                ON quotes(speaker);
+            """))
+            
+            session.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_quotes_episode_timestamp 
+                ON quotes(episode_id, timestamp_sec);
+            """))
+            
+            # PostgreSQL full-text search index
+            session.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_quotes_text_gin 
+                ON quotes USING gin(to_tsvector('english', text));
+            """))
+            
+            # Search log table
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS search_log (
+                    id SERIAL PRIMARY KEY,
+                    ts INTEGER NOT NULL,
+                    query TEXT NOT NULL,
+                    topk INTEGER NOT NULL,
+                    ip VARCHAR(45),
+                    user_agent TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+            
+        else:
+            # SQLite schema
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS quotes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    episode_id TEXT NOT NULL,
+                    timestamp_sec INTEGER NOT NULL,
+                    speaker TEXT NOT NULL,
+                    text TEXT NOT NULL,
+                    episode_name TEXT,
+                    spotify_url TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+            
+            # SQLite indexes
+            session.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_quotes_speaker 
+                ON quotes(speaker);
+            """))
+            
+            session.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_quotes_episode_timestamp 
+                ON quotes(episode_id, timestamp_sec);
+            """))
+            
+            # SQLite FTS5 virtual table
+            session.execute(text("""
+                CREATE VIRTUAL TABLE IF NOT EXISTS quotes_fts USING fts5(
+                    text, content='quotes', content_rowid='id'
+                );
+            """))
+            
+            # Search log table
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS search_log (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ts INTEGER NOT NULL,
+                    query TEXT NOT NULL,
+                    topk INTEGER NOT NULL,
+                    ip TEXT,
+                    user_agent TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
         
-        # Create optimized indexes for search performance
-        session.execute(text("""
-            CREATE INDEX IF NOT EXISTS idx_quotes_speaker 
-            ON quotes(speaker);
-        """))
-        
-        session.execute(text("""
-            CREATE INDEX IF NOT EXISTS idx_quotes_episode_timestamp 
-            ON quotes(episode_id, timestamp_sec);
-        """))
-        
-        # Create full-text search index
-        session.execute(text("""
-            CREATE INDEX IF NOT EXISTS idx_quotes_text_gin 
-            ON quotes USING gin(to_tsvector('english', text));
-        """))
-        
-        # Create search log table
-        session.execute(text("""
-            CREATE TABLE IF NOT EXISTS search_log (
-                id SERIAL PRIMARY KEY,
-                ts INTEGER NOT NULL,
-                query TEXT NOT NULL,
-                topk INTEGER NOT NULL,
-                ip VARCHAR(45),
-                user_agent TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        """))
-        
-        # Create index for search analytics
+        # Common index for search analytics
         session.execute(text("""
             CREATE INDEX IF NOT EXISTS idx_search_log_ts 
             ON search_log(ts);

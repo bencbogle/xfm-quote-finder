@@ -1,6 +1,6 @@
 # XFM Quote Finder
 
-A React + FastAPI application for searching through XFM episodes, podcasts, and guides using SQLite FTS5 full-text search.
+A React + FastAPI application for searching through XFM episodes, podcasts, and guides using PostgreSQL full-text search.
 
 ## Quick Start
 
@@ -104,10 +104,10 @@ The application supports both SQLite (development) and PostgreSQL (production):
 
 **Development (SQLite):**
 1. Run `uv run python scripts/csv_to_sqlite.py` to create the database
-2. The database will be created at `out/quotes.db`
+2. Set `DATABASE_URL="sqlite:///./out/quotes.db"` for local testing
 
 **Production (PostgreSQL):**
-1. Set `DATABASE_URL` environment variable
+1. Set `DATABASE_URL` environment variable (Railway provides this automatically)
 2. Run `uv run python scripts/csv_to_postgres.py` to import data
 3. Database will be automatically initialized with optimized indexes
 

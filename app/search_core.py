@@ -5,6 +5,7 @@ Optimized for production with proper indexing and query performance.
 import os
 import re
 from typing import List, Dict, Any
+from sqlalchemy import text
 from app.database import get_connection
 
 def fmt_time(sec: int) -> str:
@@ -21,37 +22,54 @@ def normalize_query(query: str) -> str:
 
 def search_quotes(query: str, top_k: int = 10, speaker_filter: str = None) -> List[Dict[str, Any]]:
     """
-    Search quotes using PostgreSQL full-text search with ranking.
-    Optimized for production with proper indexing.
+    Search quotes using database-specific full-text search.
+    Supports both PostgreSQL and SQLite with optimized queries.
     """
     normalized_query = normalize_query(query)
+    is_postgres = "postgresql" in os.getenv("DATABASE_URL", "").lower()
     
     with get_connection() as conn:
-        # Build the base query with full-text search
-        sql_query = """
-            SELECT 
-                id, episode_id, timestamp_sec, speaker, text,
-                episode_name, spotify_url,
-                ts_rank(to_tsvector('english', text), plainto_tsquery('english', %s)) as rank
-            FROM quotes
-            WHERE to_tsvector('english', text) @@ plainto_tsquery('english', %s)
-        """
-        params = [normalized_query, normalized_query]
-        
-        # Add speaker filter if specified
-        if speaker_filter:
-            sql_query += " AND speaker = %s"
-            params.append(speaker_filter.lower())
-        
-        # Order by relevance and timestamp, limit results
-        sql_query += """
-            ORDER BY rank DESC, timestamp_sec ASC
-            LIMIT %s
-        """
-        params.append(top_k)
+        if is_postgres:
+            # PostgreSQL full-text search
+            sql_query = """
+                SELECT 
+                    id, episode_id, timestamp_sec, speaker, text,
+                    episode_name, spotify_url,
+                    ts_rank(to_tsvector('english', text), plainto_tsquery('english', :query)) as rank
+                FROM quotes
+                WHERE to_tsvector('english', text) @@ plainto_tsquery('english', :query)
+            """
+            params = {"query": normalized_query}
+            
+            if speaker_filter:
+                sql_query += " AND speaker = :speaker"
+                params["speaker"] = speaker_filter.lower()
+            
+            sql_query += " ORDER BY rank DESC, timestamp_sec ASC LIMIT :limit"
+            params["limit"] = top_k
+            
+        else:
+            # SQLite FTS5 search
+            sql_query = """
+                SELECT 
+                    q.id, q.episode_id, q.timestamp_sec, q.speaker, q.text,
+                    q.episode_name, q.spotify_url,
+                    bm25(quotes_fts) as rank
+                FROM quotes_fts
+                JOIN quotes q ON q.id = quotes_fts.rowid
+                WHERE quotes_fts MATCH :query
+            """
+            params = {"query": normalized_query}
+            
+            if speaker_filter:
+                sql_query += " AND q.speaker = :speaker"
+                params["speaker"] = speaker_filter.lower()
+            
+            sql_query += " ORDER BY rank ASC LIMIT :limit"
+            params["limit"] = top_k
         
         # Execute query
-        result = conn.execute(sql_query, params)
+        result = conn.execute(text(sql_query), params)
         rows = result.fetchall()
         
         # Convert to results format
