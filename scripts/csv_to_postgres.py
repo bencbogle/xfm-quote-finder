@@ -23,21 +23,19 @@ def main():
     # Check database connection
     try:
         with get_connection() as conn:
-            conn.execute("SELECT 1")
+            from sqlalchemy import text
+            conn.execute(text("SELECT 1"))
         print("✅ Database connection successful")
     except Exception as e:
         print(f"❌ Database connection failed: {e}")
         print("Make sure DATABASE_URL environment variable is set")
         sys.exit(1)
     
-    # Initialize database schema
-    print("🔧 Initializing database schema...")
-    init_database()
+    # Skip schema initialization - use existing table
+    print("ℹ️  Using existing database schema")
     
-    # Clear existing data
-    print("🧹 Clearing existing data...")
-    with get_connection() as conn:
-        conn.execute("TRUNCATE TABLE quotes RESTART IDENTITY CASCADE")
+    # Skip clearing data - just insert
+    print("ℹ️  Inserting data into existing table")
     
     # Load and insert data
     print(f"📥 Loading data from {CSV_PATH}...")
@@ -46,37 +44,37 @@ def main():
         rows = []
         
         for row in reader:
-            rows.append((
-                row["episode_id"],
-                int(row["timestamp_sec"]),
-                row["speaker"],
-                row["text"],
-                row["episode_name"],
-                row["spotify_url"]
-            ))
+            rows.append({
+                "episode_id": row["episode_id"],
+                "timestamp_sec": int(row["timestamp_sec"]),
+                "speaker": row["speaker"],
+                "text": row["text"],
+                "episode_name": row["episode_name"],
+                "spotify_url": row["spotify_url"]
+            })
     
     # Batch insert for better performance
     print(f"💾 Inserting {len(rows)} quotes...")
     with get_connection() as conn:
-        conn.execute("""
+        from sqlalchemy import text
+        conn.execute(text("""
             INSERT INTO quotes (episode_id, timestamp_sec, speaker, text, episode_name, spotify_url)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, rows)
+            VALUES (:episode_id, :timestamp_sec, :speaker, :text, :episode_name, :spotify_url)
+        """), rows)
     
-    # Update full-text search index
-    print("🔍 Updating full-text search index...")
-    with get_connection() as conn:
-        conn.execute("REINDEX INDEX idx_quotes_text_gin")
+    # Skip full-text search index for now
+    print("ℹ️  Skipping full-text search index (will be created by app)")
     
     # Get final statistics
     with get_connection() as conn:
-        result = conn.execute("""
+        from sqlalchemy import text
+        result = conn.execute(text("""
             SELECT 
                 COUNT(*) as total_quotes,
                 COUNT(DISTINCT episode_id) as unique_episodes,
                 COUNT(DISTINCT speaker) as unique_speakers
             FROM quotes
-        """)
+        """))
         stats = result.fetchone()
     
     print(f"✅ Import completed successfully!")
