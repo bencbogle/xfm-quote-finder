@@ -53,7 +53,7 @@ def init_database():
                     id SERIAL PRIMARY KEY,
                     episode_id VARCHAR(50) NOT NULL,
                     timestamp_sec INTEGER NOT NULL,
-                    speaker VARCHAR(100) NOT NULL,
+                    speaker VARCHAR(200) NOT NULL,
                     text TEXT NOT NULL,
                     episode_name TEXT,
                     spotify_url TEXT,
