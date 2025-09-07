@@ -1,8 +1,7 @@
 import { SearchResponse, StatsResponse } from './types'
 
-// In development, use the proxy to localhost:8000
-// In production, use relative paths
-const API_BASE = (import.meta as any).env?.PROD ? '' : '/api';
+// Always use /api prefix since backend routes are /api/*
+const API_BASE = '/api';
 
 export async function searchQuotes(query: string, limit: number = 10, speaker?: string): Promise<SearchResponse> {
   const params = new URLSearchParams({
