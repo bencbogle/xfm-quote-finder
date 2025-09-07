@@ -11,7 +11,9 @@ from contextlib import contextmanager
 # Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is required")
+    # Fallback to SQLite for local development
+    DATABASE_URL = "sqlite:///./out/quotes.db"
+    print("Warning: DATABASE_URL not set, using SQLite fallback")
 
 # Create engine with connection pooling for production
 engine = create_engine(
