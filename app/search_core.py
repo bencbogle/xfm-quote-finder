@@ -1,79 +1,100 @@
-# SQLite-based search with FTS5 full-text search
-import sqlite3
+"""
+PostgreSQL-based search with full-text search optimization.
+Optimized for production with proper indexing and query performance.
+"""
 import os
-from pathlib import Path
+import re
 from typing import List, Dict, Any
-
-# Use environment variable for database path in production
-DB_PATH = Path(os.getenv("DATABASE_PATH", "out/quotes.db"))
+from app.database import get_connection
 
 def fmt_time(sec: int) -> str:
     """Format seconds as HH:MM:SS."""
     h, m, s = sec // 3600, (sec % 3600) // 60, sec % 60
     return f"{h:02d}:{m:02d}:{s:02d}"
 
-def search_quotes(query: str, top_k: int = 10, min_score: int = 85, speaker_filter: str = None):
-    """Search quotes using SQLite FTS5 full-text search."""
-    if not DB_PATH.exists():
-        raise FileNotFoundError(f"Database not found: {DB_PATH}. Run scripts/csv_to_sqlite.py first.")
-    
-    # Normalize query: remove punctuation and normalize whitespace
-    import re
-    normalized_query = re.sub(r'[^\w\s]', ' ', query.lower()).strip()
-    normalized_query = ' '.join(normalized_query.split())  # Remove extra spaces
-    
-    con = sqlite3.connect(DB_PATH)
-    con.row_factory = sqlite3.Row
-    cur = con.cursor()
-    
-    # Build the query with speaker filter
-    sql_query = """
-        SELECT q.id, q.episode_id, q.timestamp_sec, q.speaker, q.text,
-               q.episode_name, q.spotify_url,
-               bm25(quotes_fts) AS rank
-        FROM quotes_fts
-        JOIN quotes q ON q.id = quotes_fts.rowid
-        WHERE quotes_fts MATCH ?
-    """
-    params = [normalized_query]
-    
-    if speaker_filter:
-        sql_query += " AND q.speaker = ?"
-        params.append(speaker_filter.lower())
-    
-    sql_query += """
-        ORDER BY rank ASC
-        LIMIT ?
-    """
-    params.append(top_k * 2)  # Get more results for filtering
-    
-    # Execute search
-    cur.execute(sql_query, params)
-    rows = cur.fetchall()
-    con.close()
+def normalize_query(query: str) -> str:
+    """Normalize search query for better matching."""
+    # Remove punctuation and normalize whitespace
+    normalized = re.sub(r'[^\w\s]', ' ', query.lower()).strip()
+    normalized = ' '.join(normalized.split())  # Remove extra spaces
+    return normalized
 
-    # Convert to results format
-    results = []
-    for r in rows:
-        # Convert FTS rank to score (0-100 scale, higher is better)
-        # FTS rank is lower = better, so invert it
-        rank = r["rank"] or 0
-        score = max(85, int(100 - min(100, rank * 2)))  # Scale rank to 85-100 range
+def search_quotes(query: str, top_k: int = 10, speaker_filter: str = None) -> List[Dict[str, Any]]:
+    """
+    Search quotes using PostgreSQL full-text search with ranking.
+    Optimized for production with proper indexing.
+    """
+    normalized_query = normalize_query(query)
+    
+    with get_connection() as conn:
+        # Build the base query with full-text search
+        sql_query = """
+            SELECT 
+                id, episode_id, timestamp_sec, speaker, text,
+                episode_name, spotify_url,
+                ts_rank(to_tsvector('english', text), plainto_tsquery('english', %s)) as rank
+            FROM quotes
+            WHERE to_tsvector('english', text) @@ plainto_tsquery('english', %s)
+        """
+        params = [normalized_query, normalized_query]
         
-        # Remove score filtering since we're not showing scores anymore
-        results.append({
-            "episode_id": r["episode_id"],
-            "episode_name": r["episode_name"],
-            "timestamp_sec": r["timestamp_sec"],
-            "timestamp_hms": fmt_time(r["timestamp_sec"]),
-            "speaker": r["speaker"],
-            "text": r["text"],
-            "spotify_url": r["spotify_url"] or "",
-            "rank": rank,  # Keep rank for sorting
-        })
-    
-    # Sort by FTS rank (ascending) and then by timestamp
-    # Lower rank = better match, so we sort by rank first
-    results.sort(key=lambda x: (x.get("rank", 0), x["timestamp_sec"]))
-    
-    return results[:top_k]
+        # Add speaker filter if specified
+        if speaker_filter:
+            sql_query += " AND speaker = %s"
+            params.append(speaker_filter.lower())
+        
+        # Order by relevance and timestamp, limit results
+        sql_query += """
+            ORDER BY rank DESC, timestamp_sec ASC
+            LIMIT %s
+        """
+        params.append(top_k)
+        
+        # Execute query
+        result = conn.execute(sql_query, params)
+        rows = result.fetchall()
+        
+        # Convert to results format
+        results = []
+        for row in rows:
+            results.append({
+                "episode_id": row.episode_id,
+                "episode_name": row.episode_name or "",
+                "timestamp_sec": row.timestamp_sec,
+                "timestamp_hms": fmt_time(row.timestamp_sec),
+                "speaker": row.speaker,
+                "text": row.text,
+                "spotify_url": row.spotify_url or "",
+                "rank": float(row.rank) if row.rank else 0.0,
+            })
+        
+        return results
+
+def log_search(query: str, top_k: int, ip: str, user_agent: str):
+    """Log search queries for analytics."""
+    try:
+        with get_connection() as conn:
+            conn.execute("""
+                INSERT INTO search_log (ts, query, topk, ip, user_agent)
+                VALUES (EXTRACT(EPOCH FROM NOW())::INTEGER, %s, %s, %s, %s)
+            """, (query, top_k, ip, user_agent))
+    except Exception as e:
+        # Don't fail the search if logging fails
+        print(f"Failed to log search: {e}")
+
+def get_stats():
+    """Get database statistics."""
+    with get_connection() as conn:
+        result = conn.execute("""
+            SELECT 
+                COUNT(*) as total_quotes,
+                COUNT(DISTINCT episode_id) as unique_episodes,
+                ARRAY_AGG(DISTINCT episode_id ORDER BY episode_id) as episodes
+            FROM quotes
+        """)
+        row = result.fetchone()
+        return {
+            "total_quotes": row.total_quotes,
+            "unique_episodes": row.unique_episodes,
+            "episodes": row.episodes
+        }

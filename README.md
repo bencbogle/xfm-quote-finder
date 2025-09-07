@@ -17,7 +17,11 @@ A React + FastAPI application for searching through XFM episodes, podcasts, and 
 
 2. **Set up the database:**
    ```bash
+   # For local development (SQLite)
    uv run python scripts/csv_to_sqlite.py
+   
+   # For production (PostgreSQL)
+   uv run python scripts/csv_to_postgres.py
    ```
 
 3. **Run the development servers:**
@@ -41,7 +45,7 @@ A React + FastAPI application for searching through XFM episodes, podcasts, and 
    - Connect your GitHub repository
 
 2. **Set environment variables in Railway:**
-   - `DATABASE_PATH`: `/data/quotes.db` (Railway persistent storage)
+   - `DATABASE_URL`: (Railway will provide this automatically when you add PostgreSQL)
    - `PORT`: `8000` (Railway will set this automatically)
 
 3. **Deploy:**
@@ -50,12 +54,13 @@ A React + FastAPI application for searching through XFM episodes, podcasts, and 
    - Your app will be available at the provided Railway URL
 
 4. **Database setup:**
-   - Upload your `quotes.db` file to Railway's persistent storage
-   - Or run the database setup scripts in Railway's console
+   - Add PostgreSQL service in Railway
+   - Railway will automatically provide `DATABASE_URL`
+   - Run the import script: `python scripts/csv_to_postgres.py`
 
 ## Features
 
-- **Full-text search** using SQLite FTS5
+- **Full-text search** using PostgreSQL with optimized indexing
 - **Speaker filtering** (Ricky, Steve, Karl)
 - **Episode information** with Spotify links
 - **Modern React UI** with Tailwind CSS
@@ -64,9 +69,9 @@ A React + FastAPI application for searching through XFM episodes, podcasts, and 
 ## Tech Stack
 
 - **Frontend:** React 18, TypeScript, Vite, Tailwind CSS
-- **Backend:** FastAPI, SQLite with FTS5, Uvicorn
+- **Backend:** FastAPI, PostgreSQL with full-text search, Uvicorn
 - **Deployment:** Railway (full-stack hosting)
-- **Search:** SQLite FTS5 full-text search engine
+- **Search:** PostgreSQL full-text search with GIN indexes
 
 ## API Endpoints
 
@@ -95,10 +100,16 @@ xfm-quote-finder/
 
 ### Database Setup
 
-The application uses SQLite with FTS5 for full-text search. To set up the database:
+The application supports both SQLite (development) and PostgreSQL (production):
 
-1. Run `python scripts/csv_to_sqlite.py` to create the database
+**Development (SQLite):**
+1. Run `uv run python scripts/csv_to_sqlite.py` to create the database
 2. The database will be created at `out/quotes.db`
+
+**Production (PostgreSQL):**
+1. Set `DATABASE_URL` environment variable
+2. Run `uv run python scripts/csv_to_postgres.py` to import data
+3. Database will be automatically initialized with optimized indexes
 
 ### Testing
 
