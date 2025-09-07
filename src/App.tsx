@@ -17,6 +17,7 @@ function App() {
   const [speakerFilter, setSpeakerFilter] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [clearSearchTrigger, setClearSearchTrigger] = useState(0)
 
   // Load stats on mount
   useEffect(() => {
@@ -58,8 +59,10 @@ function App() {
   const handleHomeClick = () => {
     setSearchState('idle')
     setQuery('')
+    setSpeakerFilter('')
     setResults([])
     setError(null)
+    setClearSearchTrigger(prev => prev + 1)
   }
 
   const handleSpeakerChange = (speaker: string) => {
@@ -82,6 +85,7 @@ function App() {
               ref={searchInputRef}
               onSearch={handleSearchSubmit}
               placeholder="Enter a quote to search for..."
+              clearTrigger={clearSearchTrigger}
             />
             <SpeakerFilter 
               value={speakerFilter}

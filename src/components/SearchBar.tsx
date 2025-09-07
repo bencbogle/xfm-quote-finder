@@ -1,13 +1,21 @@
-import { useState, forwardRef } from 'react'
+import { useState, forwardRef, useEffect } from 'react'
 
 interface SearchBarProps {
   onSearch: (query: string) => void
   placeholder?: string
+  clearTrigger?: number
 }
 
 const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
-  ({ onSearch, placeholder = "Search quotes..." }, ref) => {
+  ({ onSearch, placeholder = "Search quotes...", clearTrigger }, ref) => {
     const [query, setQuery] = useState('')
+
+    // Clear the search bar when clearTrigger changes
+    useEffect(() => {
+      if (clearTrigger !== undefined) {
+        setQuery('')
+      }
+    }, [clearTrigger])
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()
