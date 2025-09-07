@@ -57,12 +57,8 @@ const formatEpisodeDisplay = (episodeId: string, episodeName: string): string =>
     return `${displayPrefix} | ${seriesDisplay}`
   }
   
-  // For other cases (podcast), include the episode name if available
-  if (episodeName && episodeName.trim() !== '') {
-    return `${displayPrefix} | ${seriesDisplay}: ${episodeName}`
-  } else {
-    return `${displayPrefix} | ${seriesDisplay}`
-  }
+  // For other cases (podcast), just show series/episode without episode name
+  return `${displayPrefix} | ${seriesDisplay}`
 }
 
 export default function ResultCard({ result }: ResultCardProps) {
