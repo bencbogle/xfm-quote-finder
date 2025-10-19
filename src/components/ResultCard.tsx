@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { SearchResult } from '../types'
 
 interface ResultCardProps {
@@ -62,9 +63,23 @@ const formatEpisodeDisplay = (episodeId: string, episodeName: string): string =>
 }
 
 export default function ResultCard({ result }: ResultCardProps) {
+  const [copied, setCopied] = useState(false)
+
   const handleSpotifyClick = () => {
     if (result.spotify_url) {
       window.open(result.spotify_url, '_blank')
+    }
+  }
+
+  const handleCopyUrl = async () => {
+    if (result.spotify_url) {
+      try {
+        await navigator.clipboard.writeText(result.spotify_url)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      } catch (err) {
+        console.error('Failed to copy URL:', err)
+      }
     }
   }
 
@@ -90,12 +105,20 @@ export default function ResultCard({ result }: ResultCardProps) {
             />
           )}
           {result.spotify_url && (
-            <button
-              onClick={handleSpotifyClick}
-              className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
-            >
-              Listen on Spotify
-            </button>
+            <>
+              <button
+                onClick={handleCopyUrl}
+                className="border border-green-600 text-green-600 px-3 py-1 rounded text-sm hover:bg-green-50 transition-colors"
+              >
+                {copied ? 'Copied!' : 'Copy Link'}
+              </button>
+              <button
+                onClick={handleSpotifyClick}
+                className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
+              >
+                Listen on Spotify
+              </button>
+            </>
           )}
         </div>
       </div>
