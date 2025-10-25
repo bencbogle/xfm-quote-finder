@@ -141,10 +141,8 @@ def spotify_url(metadata: dict | None, sec: int, episode_id: str = None) -> str:
                     episode_id = mappings[spotify_episode_name]
                     return f"https://open.spotify.com/episode/{episode_id}?t={sec}"
         
-        # Fallback to a known working episode ID
-        # TODO: Replace this with proper episode mapping
-        working_episode_id = "6qYL2Hg6zHPyiYxbJIqRma"
-        return f"https://open.spotify.com/episode/{working_episode_id}?t={sec}"
+        # No mapping found - return empty string instead of wrong episode
+        return ""
     
     # For guide episodes (which don't have spotify_uri), try to map by episode name
     if episode_id:
