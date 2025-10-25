@@ -34,16 +34,35 @@ def main():
     # Skip schema initialization - use existing table
     print("ℹ️  Using existing database schema")
     
-    # Skip clearing data - just insert
-    print("ℹ️  Inserting data into existing table")
+    # Clear existing data before importing
+    print("🗑️  Clearing existing quotes...")
+    with get_connection() as conn:
+        from sqlalchemy import text
+        result = conn.execute(text("DELETE FROM quotes"))
+        conn.commit()
+        print(f"   Deleted {result.rowcount:,} existing quotes")
+        
+        # Verify table is empty
+        count_result = conn.execute(text("SELECT COUNT(*) FROM quotes"))
+        count = count_result.fetchone()[0]
+        if count > 0:
+            print(f"❌ Table still has {count} rows after delete! Aborting.")
+            sys.exit(1)
+        print("✅ Table is empty")
     
     # Load and insert data
     print(f"📥 Loading data from {CSV_PATH}...")
     with CSV_PATH.open(encoding="utf-8") as f:
         reader = csv.DictReader(f)
         rows = []
+        skipped = 0
         
         for row in reader:
+            # Skip episodes without Spotify URLs (Best Of episodes)
+            if not row["spotify_url"].strip():
+                skipped += 1
+                continue
+                
             rows.append({
                 "episode_id": row["episode_id"],
                 "timestamp_sec": int(row["timestamp_sec"]),
@@ -53,14 +72,23 @@ def main():
                 "spotify_url": row["spotify_url"]
             })
     
-    # Batch insert for better performance
-    print(f"💾 Inserting {len(rows)} quotes...")
+    if skipped > 0:
+        print(f"ℹ️  Skipped {skipped:,} quotes from Best Of episodes (no Spotify URL)")
+    
+    # Batch insert for better performance (insert in chunks)
+    print(f"💾 Inserting {len(rows)} quotes in batches of 1000...")
+    BATCH_SIZE = 1000
     with get_connection() as conn:
         from sqlalchemy import text
-        conn.execute(text("""
-            INSERT INTO quotes (episode_id, timestamp_sec, speaker, text, episode_name, spotify_url)
-            VALUES (:episode_id, :timestamp_sec, :speaker, :text, :episode_name, :spotify_url)
-        """), rows)
+        for i in range(0, len(rows), BATCH_SIZE):
+            batch = rows[i:i+BATCH_SIZE]
+            conn.execute(text("""
+                INSERT INTO quotes (episode_id, timestamp_sec, speaker, text, episode_name, spotify_url)
+                VALUES (:episode_id, :timestamp_sec, :speaker, :text, :episode_name, :spotify_url)
+            """), batch)
+            conn.commit()
+            if (i + BATCH_SIZE) % 10000 == 0 or i + BATCH_SIZE >= len(rows):
+                print(f"   Inserted {min(i + BATCH_SIZE, len(rows)):,} quotes...")
     
     # Skip full-text search index for now
     print("ℹ️  Skipping full-text search index (will be created by app)")
