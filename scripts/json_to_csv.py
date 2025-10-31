@@ -30,12 +30,23 @@ def load_episode_mapping():
             return json.load(f)
     return []
 
-def convert_episode_name_to_spotify_format(episode_id: str) -> str:
+def convert_guide_name_to_spotify_format(episode_name: str) -> str:
+    """Convert guide episode name from data file to Spotify format."""
+    # "The Ricky Gervais Guide to: Medicine" -> "TRGS Guide to... Medicine"
+    if episode_name.startswith("The Ricky Gervais Guide to:"):
+        title = episode_name.replace("The Ricky Gervais Guide to:", "").strip()
+        # Handle special case: "Law and Order" -> "Law & Order"
+        if title == "Law and Order":
+            title = "Law & Order"
+        return f"TRGS Guide to... {title}"
+    return episode_name
+
+def convert_episode_name_to_spotify_format(episode_id: str, episode_name: str = None) -> str:
     """Convert our episode ID format to Spotify episode name format."""
     # Examples:
     # ep-podcast-S1E11.json -> TRGS Podcast S01E11
     # ep-xfm-S1E11.json -> S01E11 | Remastered  
-    # ep-guide-S1E01.json -> TRGS Guide to... Medicine
+    # ep-guide-S1E01.json -> TRGS Guide to... Medicine (from actual episode name)
     
     if episode_id.startswith("podcast-"):
         # podcast-s1e11 -> TRGS Podcast S01E11
@@ -84,23 +95,10 @@ def convert_episode_name_to_spotify_format(episode_id: str) -> str:
         return f"{series_episode} | Remastered"
     
     elif episode_id.startswith("guide-"):
-        # guide-s1e1 -> TRGS Guide to... Medicine
-        # We need to map guide episodes by their specific names
-        guide_mapping = {
-            "guide-s1e1": "TRGS Guide to... Medicine",
-            "guide-s1e2": "TRGS Guide to... Natural History", 
-            "guide-s1e3": "TRGS Guide to... The Arts",
-            "guide-s1e4": "TRGS Guide to... Philosophy",
-            "guide-s1e5": "TRGS Guide to... Society",
-            "guide-s2e1": "TRGS Guide to... The English",
-            "guide-s2e2": "TRGS Guide to... The Future",
-            "guide-s2e3": "TRGS Guide to... Law & Order",
-            "guide-s2e4": "TRGS Guide to... The Earth",
-            "guide-s2e5": "TRGS Guide to... The Human Body",
-            "guide-s2e6": "TRGS Guide to... The World Cup",
-            "guide-s2e7": "TRGS Guide to... Armed Forces",
-        }
-        return guide_mapping.get(episode_id, "")
+        # For guide episodes, use the actual episode name from the JSON file
+        if episode_name:
+            return convert_guide_name_to_spotify_format(episode_name)
+        return ""
     
     return ""
 
@@ -125,7 +123,7 @@ def get_spotify_episode_mapping():
     _SPOTIFY_MAPPING_CACHE = mappings
     return mappings
 
-def spotify_url(metadata: dict | None, sec: int, episode_id: str = None) -> str:
+def spotify_url(metadata: dict | None, sec: int, episode_id: str = None, episode_name: str = None) -> str:
     """Generate Spotify URL with timestamp from metadata."""
     if not metadata: return ""
     
@@ -134,7 +132,7 @@ def spotify_url(metadata: dict | None, sec: int, episode_id: str = None) -> str:
     if spotify_uri and "episode:" in spotify_uri:
         # Try to map to the correct remastered episode
         if episode_id:
-            spotify_episode_name = convert_episode_name_to_spotify_format(episode_id)
+            spotify_episode_name = convert_episode_name_to_spotify_format(episode_id, episode_name)
             if spotify_episode_name:
                 mappings = get_spotify_episode_mapping()
                 if spotify_episode_name in mappings:
@@ -146,7 +144,7 @@ def spotify_url(metadata: dict | None, sec: int, episode_id: str = None) -> str:
     
     # For guide episodes (which don't have spotify_uri), try to map by episode name
     if episode_id:
-        spotify_episode_name = convert_episode_name_to_spotify_format(episode_id)
+        spotify_episode_name = convert_episode_name_to_spotify_format(episode_id, episode_name)
         if spotify_episode_name:
             mappings = get_spotify_episode_mapping()
             if spotify_episode_name in mappings:
@@ -198,7 +196,7 @@ def main():
                     "speaker": (item.get("actor") or "").strip(),
                     "text": text,
                     "episode_name": ep_name,
-                    "spotify_url": spotify_url(metadata, ts, ep_id),
+                    "spotify_url": spotify_url(metadata, ts, ep_id, ep_name),
                 })
     print(f"Wrote {OUT_FILE}")
 

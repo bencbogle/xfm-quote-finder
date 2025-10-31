@@ -7,6 +7,11 @@ import csv
 import os
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 from app.database import get_connection, init_database
 
 CSV_PATH = Path("out/quotes.csv")

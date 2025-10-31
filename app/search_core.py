@@ -103,13 +103,13 @@ def log_search(query: str, top_k: int, ip: str, user_agent: str):
 def get_stats():
     """Get database statistics."""
     with get_connection() as conn:
-        result = conn.execute("""
+        result = conn.execute(text("""
             SELECT 
                 COUNT(*) as total_quotes,
                 COUNT(DISTINCT episode_id) as unique_episodes,
                 ARRAY_AGG(DISTINCT episode_id ORDER BY episode_id) as episodes
             FROM quotes
-        """)
+        """))
         row = result.fetchone()
         return {
             "total_quotes": row.total_quotes,
