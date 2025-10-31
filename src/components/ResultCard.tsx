@@ -107,16 +107,16 @@ export default function ResultCard({ result }: ResultCardProps) {
           {result.spotify_url && (
             <>
               <button
-                onClick={handleCopyUrl}
-                className="border border-green-600 text-green-600 px-3 py-1 rounded text-sm hover:bg-green-50 transition-colors"
-              >
-                {copied ? 'Copied!' : 'Copy Link'}
-              </button>
-              <button
                 onClick={handleSpotifyClick}
                 className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
               >
                 Listen on Spotify
+              </button>
+              <button
+                onClick={handleCopyUrl}
+                className="border border-green-600 text-green-600 px-3 py-1 rounded text-sm hover:bg-green-50 transition-colors"
+              >
+                {copied ? 'Copied!' : 'Copy Link'}
               </button>
             </>
           )}
