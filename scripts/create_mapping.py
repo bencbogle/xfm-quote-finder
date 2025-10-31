@@ -117,6 +117,17 @@ def get_data_files() -> List[Path]:
     data_dir = Path("data")
     return list(data_dir.glob("*.json"))
 
+def convert_guide_name_to_spotify_format(episode_name: str) -> str:
+    """Convert guide episode name from data file to Spotify format."""
+    # "The Ricky Gervais Guide to: Medicine" -> "TRGS Guide to... Medicine"
+    if episode_name.startswith("The Ricky Gervais Guide to:"):
+        title = episode_name.replace("The Ricky Gervais Guide to:", "").strip()
+        # Handle special case: "Law and Order" -> "Law & Order"
+        if title == "Law and Order":
+            title = "Law & Order"
+        return f"TRGS Guide to... {title}"
+    return episode_name
+
 def create_mapping() -> List[Dict]:
     """Create the mapping between data files and Spotify episodes."""
     spotify_mappings = load_spotify_mappings()
@@ -128,8 +139,21 @@ def create_mapping() -> List[Dict]:
         # Extract episode ID from filename (e.g., ep-xfm-S1E01.json -> xfm-s1e01)
         episode_id = data_file.stem.replace("ep-", "")
         
-        # Convert to Spotify episode name
-        spotify_episode_name = convert_episode_name_to_spotify_format(episode_id)
+        # For guide episodes, read the actual name from the JSON file
+        if episode_id.startswith("guide-"):
+            try:
+                import json
+                with open(data_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    actual_name = data.get("name", "")
+                    # Convert to Spotify format
+                    spotify_episode_name = convert_guide_name_to_spotify_format(actual_name)
+            except Exception as e:
+                print(f"Warning: Could not read {data_file}: {e}")
+                spotify_episode_name = convert_episode_name_to_spotify_format(episode_id)
+        else:
+            # For other episodes, use the existing conversion
+            spotify_episode_name = convert_episode_name_to_spotify_format(episode_id)
         
         # Check if we have a mapping
         if spotify_episode_name in spotify_mappings:

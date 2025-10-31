@@ -2,9 +2,14 @@
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
+
 from app.search_core import search_quotes, log_search, get_stats
 from app.database import init_database
-import os
 
 app = FastAPI(title="XFM Quote Finder")
 
