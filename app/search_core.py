@@ -92,10 +92,16 @@ def log_search(query: str, top_k: int, ip: str, user_agent: str):
     """Log search queries for analytics."""
     try:
         with get_connection() as conn:
-            conn.execute("""
+            conn.execute(text("""
                 INSERT INTO search_log (ts, query, topk, ip, user_agent)
-                VALUES (EXTRACT(EPOCH FROM NOW())::INTEGER, %s, %s, %s, %s)
-            """, (query, top_k, ip, user_agent))
+                VALUES (EXTRACT(EPOCH FROM NOW())::INTEGER, :query, :topk, :ip, :user_agent)
+            """), {
+                "query": query,
+                "topk": top_k,
+                "ip": ip,
+                "user_agent": user_agent
+            })
+            conn.commit()
     except Exception as e:
         # Don't fail the search if logging fails
         print(f"Failed to log search: {e}")

@@ -1,5 +1,5 @@
 # FastAPI application with PostgreSQL backend
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from dotenv import load_dotenv
@@ -25,10 +25,30 @@ async def startup_event():
         raise
 
 @app.get("/api/search")
-def search(q: str = Query(..., min_length=2), top_k: int = 5, speaker: str = None):
+def search(
+    request: Request,
+    q: str = Query(..., min_length=2),
+    top_k: int = 5,
+    speaker: str = None,
+    test: bool = Query(False, description="If true, skip logging this search")
+):
     """Search quotes with PostgreSQL full-text search."""
     try:
         results = search_quotes(q, top_k=top_k, speaker_filter=speaker)
+        
+        # Log the search unless it's a test search
+        if not test:
+            # Extract IP address (handle proxies/load balancers)
+            ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
+            # X-Forwarded-For can contain multiple IPs, take the first one
+            if ip and "," in ip:
+                ip = ip.split(",")[0].strip()
+            
+            # Extract user agent
+            user_agent = request.headers.get("User-Agent", "unknown")
+            
+            log_search(q, top_k, ip, user_agent)
+        
         return {"query": q, "count": len(results), "results": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
