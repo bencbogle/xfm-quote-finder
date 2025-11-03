@@ -2,16 +2,59 @@
 from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request as StarletteRequest
 from dotenv import load_dotenv
 import os
 
 # Load environment variables from .env file
 load_dotenv()
 
-from app.search_core import search_quotes, log_search, get_stats
+from app.search_core import search_quotes, log_search, get_stats, log_visit
 from app.database import init_database
 
 app = FastAPI(title="XFM Quote Finder")
+
+# Middleware to track page visits
+class VisitTrackingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: StarletteRequest, call_next):
+        # Skip API endpoints and static assets
+        path = request.url.path
+        should_track = not path.startswith("/api/") and not path.startswith("/assets/") and path != "/favicon.ico"
+        
+        # Process the request first
+        response = await call_next(request)
+        
+        # Log the visit after responding (fire and forget)
+        if should_track:
+            # Extract IP address (handle proxies/load balancers)
+            ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
+            # X-Forwarded-For can contain multiple IPs, take the first one
+            if ip and "," in ip:
+                ip = ip.split(",")[0].strip()
+            
+            # Extract user agent
+            user_agent = request.headers.get("User-Agent", "unknown")
+            
+            # Log the visit asynchronously (don't block the response)
+            # Use background task to avoid blocking
+            try:
+                import asyncio
+                # Schedule the logging in background
+                asyncio.create_task(
+                    asyncio.to_thread(log_visit, ip, user_agent, path)
+                )
+            except Exception as e:
+                # Fallback: try synchronous logging (shouldn't block since response already sent)
+                try:
+                    log_visit(ip, user_agent, path)
+                except Exception as e2:
+                    # Don't fail the request if logging fails
+                    print(f"Failed to log visit: {e2}")
+        
+        return response
+
+app.add_middleware(VisitTrackingMiddleware)
 
 # Initialize database on startup
 @app.on_event("startup")

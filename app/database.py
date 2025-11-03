@@ -91,6 +91,28 @@ def init_database():
             CREATE INDEX IF NOT EXISTS idx_search_log_ts 
             ON search_log(ts);
         """))
+        
+        # Visitors tracking table
+        session.execute(text("""
+            CREATE TABLE IF NOT EXISTS visitors (
+                id SERIAL PRIMARY KEY,
+                ip VARCHAR(45) NOT NULL,
+                user_agent TEXT,
+                path VARCHAR(500),
+                visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """))
+        
+        # Visitors analytics indexes
+        session.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_visitors_ip 
+            ON visitors(ip);
+        """))
+        
+        session.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_visitors_visited_at 
+            ON visitors(visited_at);
+        """))
 
 def get_connection():
     """Get a raw database connection for complex queries."""
