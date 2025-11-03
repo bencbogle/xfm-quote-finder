@@ -7,17 +7,30 @@ import LoadingSkeleton from './components/LoadingSkeleton'
 import EmptyState from './components/EmptyState'
 import Toast from './components/Toast'
 import Footer from './components/Footer'
+import Privacy from './components/Privacy'
 import { SearchResult, SearchState } from './types'
 import { searchQuotes, getStats } from './api'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 
 function App() {
+  const [showPrivacy, setShowPrivacy] = useState(false)
   const [searchState, setSearchState] = useState<SearchState>('idle')
   const [query, setQuery] = useState('')
   const [speakerFilter, setSpeakerFilter] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [error, setError] = useState<string | null>(null)
   const [clearSearchTrigger, setClearSearchTrigger] = useState(0)
+
+  // Handle hash routing
+  useEffect(() => {
+    const handleHashChange = () => {
+      setShowPrivacy(window.location.hash === '#privacy')
+    }
+    
+    handleHashChange()
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
 
   // Load stats on mount
   useEffect(() => {
@@ -73,6 +86,15 @@ function App() {
   }
 
   const clearError = () => setError(null)
+
+  if (showPrivacy) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Privacy />
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">

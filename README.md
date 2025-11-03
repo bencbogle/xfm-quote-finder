@@ -1,30 +1,40 @@
 # XFM Quote Finder
 
-Search through thousands of quotes from the legendary XFM radio show featuring Ricky Gervais, Stephen Merchant, and Karl Pilkington. Find your favorite moments from the show that made podcasting history.
+Just a free silly tool for the fans.
 
-## What You Can Do
+Search through quotes from the XFM radio show featuring Ricky Gervais, Stephen Merchant, and Karl Pilkington.
 
-- **Search quotes** - Find any quote from the XFM shows using natural language
-- **Filter by speaker** - Search specifically for Ricky, Steve, or Karl's quotes
-- **Browse episodes** - See which episode each quote comes from with direct Spotify links
-- **Discover classics** - Rediscover the conversations that started it all
+## What It Does
 
-## How It Works
+Search quotes by typing keywords or phrases. Filter results by speaker (Ricky, Steve, or Karl). Each result shows the episode name, timestamp, and a link to the episode on Spotify.
 
-The app uses advanced search technology to quickly find quotes across the entire XFM archive. Simply type what you're looking for - whether it's a specific topic, phrase, or just a word - and get instant results.
+## How to Use
 
-## Credits & Data Sources
+1. Type a search query in the search bar
+2. Optionally filter by speaker using the filter buttons
+3. Click on results to view the full quote with episode information
 
-- **XFM Show Content**: All quotes and episodes are from the original XFM radio show featuring Ricky Gervais, Stephen Merchant, and Karl Pilkington
-- **Spotify Integration**: Episode data and links provided through Spotify's API
-- **Search Technology**: Built with PostgreSQL's powerful full-text search capabilities
+## How It's Built
 
-## Technical Details
+**Frontend**: React + TypeScript, built with Vite, styled with Tailwind CSS
 
-**Frontend**: Built with React and TypeScript for a fast, responsive user experience
-**Backend**: Powered by FastAPI for quick search results
-**Hosting**: Deployed on Railway for reliable access
-**Search Engine**: PostgreSQL with optimized indexing for lightning-fast quote discovery
+**Backend**: FastAPI (Python) with a REST API
+
+**Search**: PostgreSQL full-text search using `to_tsvector` and `plainto_tsquery` with `ts_rank` for relevance scoring. Falls back to SQLite FTS5 with BM25 ranking if PostgreSQL isn't available.
+
+**Database**: PostgreSQL (or SQLite for local development)
+
+**Deployment**: Railway
+
+## Feedback
+
+Have suggestions or found a bug? [Open an issue on GitHub](https://github.com/bencbogle/xfm-quote-finder/issues).
+
+## Acknowledgements
+
+- **Transcripts** from [scrimpton.com](https://scrimpton.com/search)
+- **Spotify uploads** by [RSK XFM Pilky01](https://open.spotify.com/show/34mXWuUCEa2UzTft5vxxLp?si=9caac35d12284346)
+- Thanks to [Rhondson](https://www.reddit.com/user/Rhondson/) for remastering the episodes
 
 ## License
 
