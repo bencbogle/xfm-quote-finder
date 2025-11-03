@@ -106,6 +106,23 @@ def log_search(query: str, top_k: int, ip: str, user_agent: str):
         # Don't fail the search if logging fails
         print(f"Failed to log search: {e}")
 
+def log_visit(ip: str, user_agent: str, path: str):
+    """Log page visits for visitor tracking."""
+    try:
+        with get_connection() as conn:
+            conn.execute(text("""
+                INSERT INTO visitors (ip, user_agent, path)
+                VALUES (:ip, :user_agent, :path)
+            """), {
+                "ip": ip,
+                "user_agent": user_agent,
+                "path": path
+            })
+            conn.commit()
+    except Exception as e:
+        # Don't fail if logging fails
+        print(f"Failed to log visit: {e}")
+
 def get_stats():
     """Get database statistics."""
     with get_connection() as conn:
@@ -121,4 +138,66 @@ def get_stats():
             "total_quotes": row.total_quotes,
             "unique_episodes": row.unique_episodes,
             "episodes": row.episodes
+        }
+
+def get_visitor_stats(days: int = None):
+    """
+    Get unique visitor statistics.
+    
+    Args:
+        days: Number of days to look back (None for all time)
+    
+    Returns:
+        Dictionary with visitor statistics
+    """
+    with get_connection() as conn:
+        if days:
+            result = conn.execute(text(f"""
+                SELECT 
+                    COUNT(DISTINCT ip) as unique_visitors,
+                    COUNT(*) as total_visits,
+                    MIN(visited_at) as first_visit,
+                    MAX(visited_at) as last_visit
+                FROM visitors
+                WHERE visited_at >= NOW() - INTERVAL '{days} days'
+            """))
+        else:
+            result = conn.execute(text("""
+                SELECT 
+                    COUNT(DISTINCT ip) as unique_visitors,
+                    COUNT(*) as total_visits,
+                    MIN(visited_at) as first_visit,
+                    MAX(visited_at) as last_visit
+                FROM visitors
+            """))
+        
+        row = result.fetchone()
+        
+        # Get daily breakdown for last 30 days
+        daily_result = conn.execute(text("""
+            SELECT 
+                DATE(visited_at) as visit_date,
+                COUNT(DISTINCT ip) as unique_visitors,
+                COUNT(*) as total_visits
+            FROM visitors
+            WHERE visited_at >= NOW() - INTERVAL '30 days'
+            GROUP BY DATE(visited_at)
+            ORDER BY visit_date DESC
+            LIMIT 30
+        """))
+        daily_rows = daily_result.fetchall()
+        
+        return {
+            "unique_visitors": row.unique_visitors or 0,
+            "total_visits": row.total_visits or 0,
+            "first_visit": str(row.first_visit) if row.first_visit else None,
+            "last_visit": str(row.last_visit) if row.last_visit else None,
+            "daily_breakdown": [
+                {
+                    "date": str(r.visit_date),
+                    "unique_visitors": r.unique_visitors,
+                    "total_visits": r.total_visits
+                }
+                for r in daily_rows
+            ]
         }
