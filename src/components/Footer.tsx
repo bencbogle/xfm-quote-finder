@@ -3,14 +3,14 @@ export default function Footer() {
     <footer className="mt-16 pt-8 border-t border-slate-200">
       <div className="text-center text-sm text-slate-600">
         <p>
-          Transcripts by{' '}
+          Transcripts from{' '}
           <a 
             href="https://scrimpton.com/search" 
             target="_blank" 
             rel="noopener noreferrer"
             className="text-emerald-600 hover:text-emerald-700 underline"
           >
-            Scrimpton
+            scrimpton.com
           </a>
           {' • '}
           Spotify uploads by{' '}
@@ -35,6 +35,22 @@ export default function Footer() {
           {' '}for remastering the episodes.
         </p>
         <p className="mt-2">
+          <a 
+            href="#privacy"
+            className="text-slate-500 hover:text-slate-700 underline"
+          >
+            Privacy Policy
+          </a>
+          {' • '}
+          <a 
+            href="https://github.com/bencbogle/xfm-quote-finder/issues" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-slate-500 hover:text-slate-700 underline"
+          >
+            Feedback & Suggestions
+          </a>
+          {' • '}
           <a 
             href="https://github.com/bencbogle/xfm-quote-finder" 
             target="_blank" 
