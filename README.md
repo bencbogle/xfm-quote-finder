@@ -20,9 +20,9 @@ Search quotes by typing keywords or phrases. Filter results by speaker (Ricky, S
 
 **Backend**: FastAPI (Python) with a REST API
 
-**Search**: PostgreSQL full-text search using `to_tsvector` and `plainto_tsquery` with `ts_rank` for relevance scoring. Falls back to SQLite FTS5 with BM25 ranking if PostgreSQL isn't available.
+**Search**: PostgreSQL full-text search using `to_tsvector`, `phraseto_tsquery`, and `ts_rank_cd` for relevance scoring with phrase matching and boost factors for exact matches.
 
-**Database**: PostgreSQL (or SQLite for local development)
+**Database**: PostgreSQL
 
 **Deployment**: Railway
 

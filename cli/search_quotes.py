@@ -24,15 +24,15 @@ def main():
         print(f"Invalid speaker. Must be one of: {', '.join(valid_speakers)}")
         raise SystemExit(1)
     
-    results = search_quotes(query, top_k=10, min_score=85, speaker_filter=speaker_filter)
+    results = search_quotes(query, top_k=10, speaker_filter=speaker_filter)
 
     if not results:
-        print("No good matches found.")
+        print("No matches found.")
         return
 
     print(f"\nTop matches for: \"{query}\"\n")
     for r in results:
-        print(f"- [{r['score']}] {r['speaker']} @ {r['timestamp_hms']} | {r['episode_id']} — {r['episode_name']}")
+        print(f"- [Rank: {r['rank']:.6f}] {r['speaker']} @ {r['timestamp_hms']} | {r['episode_id']} — {r['episode_name']}")
         print(f'  "{r["text"]}"')
         if r["spotify_url"]:
             print(f"  Spotify: {r['spotify_url']}")

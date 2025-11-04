@@ -3,10 +3,14 @@ PostgreSQL database configuration and connection management.
 Optimized for production deployment with connection pooling.
 """
 import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
 from contextlib import contextmanager
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
