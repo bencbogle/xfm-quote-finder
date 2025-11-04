@@ -8,8 +8,8 @@ export default function Header({ onClick }: HeaderProps) {
       className={`text-center py-8 ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
       onClick={onClick}
     >
-      <h1 className="text-4xl font-bold text-slate-900 mb-2 flex items-center justify-center gap-3">
-        <img src="/karl.png" alt="XFM Quote Finder" className="w-10 h-10" />
+      <h1 className="text-4xl font-bold text-slate-900 mb-2 flex items-center justify-center gap-3 w-full mx-auto">
+        <img src="/karl.png" alt="XFM Quote Finder" className="w-10 h-10 block" />
         XFM Quote Finder
       </h1>
       <p className="text-lg text-slate-600">
