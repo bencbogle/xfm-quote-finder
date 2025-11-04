@@ -24,6 +24,8 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
       }
     }
 
+    const isInputEmpty = !query.trim()
+
     return (
       <form onSubmit={handleSubmit} className="relative">
         <div className="relative">
@@ -48,11 +50,33 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
-            className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg leading-5 bg-white placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            className="block w-full pl-10 pr-12 py-3 border border-slate-300 rounded-lg leading-5 bg-white placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-base"
             aria-label="Search quotes"
           />
+          <button
+            type="submit"
+            disabled={isInputEmpty}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center transition-colors duration-200 disabled:pointer-events-none"
+            aria-label="Search"
+          >
+            <div className="p-2 -mr-2">
+              <svg 
+                className={`h-5 w-5 transition-colors duration-200 ${isInputEmpty ? 'text-slate-300' : 'text-slate-400 hover:text-emerald-600'}`}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M13 7l5 5m0 0l-5 5m5-5H6" 
+                />
+              </svg>
+            </div>
+          </button>
         </div>
-        <div className="mt-2 text-sm text-slate-500">
+        <div className="mt-2 text-sm text-slate-500 hidden sm:block">
           Press <kbd className="px-1 py-0.5 bg-slate-100 rounded text-xs">/</kbd> to focus, <kbd className="px-1 py-0.5 bg-slate-100 rounded text-xs">Enter</kbd> to search
         </div>
       </form>
