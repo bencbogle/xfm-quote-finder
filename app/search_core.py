@@ -92,16 +92,16 @@ def log_search(query: str, top_k: int, ip: str, user_agent: str):
     """Log search queries for analytics."""
     try:
         with get_connection() as conn:
-            conn.execute(text("""
-                INSERT INTO search_log (ts, query, topk, ip, user_agent)
-                VALUES (EXTRACT(EPOCH FROM NOW())::INTEGER, :query, :topk, :ip, :user_agent)
-            """), {
-                "query": query,
-                "topk": top_k,
-                "ip": ip,
-                "user_agent": user_agent
-            })
-            conn.commit()
+            with conn.begin():
+                conn.execute(text("""
+                    INSERT INTO search_log (ts, query, topk, ip, user_agent)
+                    VALUES (EXTRACT(EPOCH FROM NOW())::INTEGER, :query, :topk, :ip, :user_agent)
+                """), {
+                    "query": query,
+                    "topk": top_k,
+                    "ip": ip,
+                    "user_agent": user_agent
+                })
     except Exception as e:
         # Don't fail the search if logging fails
         print(f"Failed to log search: {e}")
@@ -110,15 +110,15 @@ def log_visit(ip: str, user_agent: str, path: str):
     """Log page visits for visitor tracking."""
     try:
         with get_connection() as conn:
-            conn.execute(text("""
-                INSERT INTO visitors (ip, user_agent, path)
-                VALUES (:ip, :user_agent, :path)
-            """), {
-                "ip": ip,
-                "user_agent": user_agent,
-                "path": path
-            })
-            conn.commit()
+            with conn.begin():
+                conn.execute(text("""
+                    INSERT INTO visitors (ip, user_agent, path)
+                    VALUES (:ip, :user_agent, :path)
+                """), {
+                    "ip": ip,
+                    "user_agent": user_agent,
+                    "path": path
+                })
     except Exception as e:
         # Don't fail if logging fails
         print(f"Failed to log visit: {e}")
