@@ -19,10 +19,10 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
     }, [clearTrigger])
 
     useEffect(() => {
-      if (presetQuery !== undefined && presetQuery !== query) {
+      if (presetQuery !== undefined) {
         setQuery(presetQuery)
       }
-    }, [presetQuery, query])
+    }, [presetQuery])
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()
