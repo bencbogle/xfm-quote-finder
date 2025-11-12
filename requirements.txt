@@ -3,3 +3,5 @@ uvicorn[standard]>=0.30
 spotipy>=2.23
 psycopg2-binary>=2.9
 sqlalchemy>=2.0
+rapidfuzz>=3.0
+symspellpy>=6.7

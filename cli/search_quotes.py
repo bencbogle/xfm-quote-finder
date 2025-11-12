@@ -24,13 +24,29 @@ def main():
         print(f"Invalid speaker. Must be one of: {', '.join(valid_speakers)}")
         raise SystemExit(1)
     
-    results = search_quotes(query, top_k=10, speaker_filter=speaker_filter)
+    payload = search_quotes(query, top_k=10, speaker_filter=speaker_filter)
+    results = payload.get("results", [])
 
     if not results:
-        print("No matches found.")
+        message = payload.get("message")
+        suggested_query = payload.get("suggested_query")
+        if message:
+            print(message)
+        if suggested_query:
+            print(f"Suggested query: {suggested_query}")
+        if payload.get("suggested_results"):
+            print("\nPreview results for suggestion:")
+            preview = payload["suggested_results"]
+            for r in preview:
+                print(f"- {r['speaker']} @ {r['timestamp_hms']} | {r['text']}")
+        if not results:
+            print("No matches found.")
         return
 
     print(f"\nTop matches for: \"{query}\"\n")
+    if payload.get("search_type") == "fuzzy":
+        print(f"⚠️  {payload.get('message', 'Showing approximate matches')}")
+        print()
     for r in results:
         print(f"- [Rank: {r['rank']:.6f}] {r['speaker']} @ {r['timestamp_hms']} | {r['episode_id']} — {r['episode_name']}")
         print(f'  "{r["text"]}"')

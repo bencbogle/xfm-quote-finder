@@ -32,7 +32,8 @@ class TestExactMatches:
     
     def test_try_both_exact_match(self):
         """Test that 'Try both.' returns the exact match first."""
-        results = search_quotes("Try both.", top_k=10, speaker_filter="karl")
+        payload = search_quotes("Try both.", top_k=10, speaker_filter="karl")
+        results = payload["results"]
         
         assert len(results) > 0, "Should return at least one result"
         assert results[0]["text"] == "Try both.", f"Expected 'Try both.' but got '{results[0]['text']}'"
@@ -42,7 +43,8 @@ class TestExactMatches:
     
     def test_try_both_no_punctuation(self):
         """Test that 'try both' (no punctuation) also finds the exact match."""
-        results = search_quotes("try both", top_k=10, speaker_filter="karl")
+        payload = search_quotes("try both", top_k=10, speaker_filter="karl")
+        results = payload["results"]
         
         assert len(results) > 0, "Should return at least one result"
         # Should find "Try both." as exact match (normalized comparison)
@@ -54,7 +56,8 @@ class TestExactMatches:
     
     def test_cat_food_exact_match(self):
         """Test that 'cat food' returns the exact match first."""
-        results = search_quotes("cat food", top_k=10, speaker_filter="karl")
+        payload = search_quotes("cat food", top_k=10, speaker_filter="karl")
+        results = payload["results"]
         
         assert len(results) > 0, "Should return at least one result"
         # Check if exact match is in results (normalized)
@@ -70,7 +73,8 @@ class TestExactMatches:
     def test_exact_matches_rank_first(self):
         """Test that exact matches always rank above partial matches."""
         # Test with a query that has both exact and partial matches
-        results = search_quotes("Try both.", top_k=20, speaker_filter="karl")
+        payload = search_quotes("Try both.", top_k=20, speaker_filter="karl")
+        results = payload["results"]
         
         if len(results) > 1:
             # Find exact matches
@@ -93,8 +97,10 @@ class TestExactMatches:
     
     def test_speaker_filter_works(self):
         """Test that speaker filter correctly filters results."""
-        results_karl = search_quotes("Try both.", top_k=10, speaker_filter="karl")
-        results_all = search_quotes("Try both.", top_k=10, speaker_filter=None)
+        payload_karl = search_quotes("Try both.", top_k=10, speaker_filter="karl")
+        payload_all = search_quotes("Try both.", top_k=10, speaker_filter=None)
+        results_karl = payload_karl["results"]
+        results_all = payload_all["results"]
         
         assert len(results_karl) > 0, "Should return results for Karl"
         assert all(r["speaker"] == "karl" for r in results_karl), \
@@ -129,7 +135,8 @@ class TestPhraseMatching:
     
     def test_single_word_fallback(self):
         """Test that single word queries still work."""
-        results = search_quotes("knob", top_k=5, speaker_filter="karl")
+        payload = search_quotes("knob", top_k=5, speaker_filter="karl")
+        results = payload["results"]
         assert len(results) > 0, "Single word search should return results"
 
 

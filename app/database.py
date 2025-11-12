@@ -46,6 +46,8 @@ def get_db_session():
 def init_database():
     """Initialize PostgreSQL database tables and indexes."""
     with get_db_session() as session:
+        session.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm;"))
+
         # PostgreSQL schema
         session.execute(text("""
             CREATE TABLE IF NOT EXISTS quotes (
