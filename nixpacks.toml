@@ -1,5 +1,4 @@
-[providers]
-default = ["node", "python"]
+providers = ["node", "python"]
 
 [phases.setup]
 nixPkgs = ["python311", "python311Packages.pip"]
