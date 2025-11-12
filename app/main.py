@@ -1,4 +1,5 @@
 # FastAPI application with PostgreSQL backend
+import logging
 from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -12,6 +13,8 @@ load_dotenv()
 
 from app.search_core import search_quotes, log_search, get_stats, log_visit
 from app.database import init_database
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="XFM Quote Finder")
 
@@ -115,6 +118,7 @@ def search(
 
         return response
     except Exception as e:
+        logger.exception("Search failed for query '%s'", q)
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 @app.get("/api/health")
