@@ -1,4 +1,5 @@
 # FastAPI application with PostgreSQL backend
+import logging
 from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -12,6 +13,8 @@ load_dotenv()
 
 from app.search_core import search_quotes, log_search, get_stats, log_visit
 from app.database import init_database
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="XFM Quote Finder")
 
@@ -77,7 +80,8 @@ def search(
 ):
     """Search quotes with PostgreSQL full-text search."""
     try:
-        results = search_quotes(q, top_k=top_k, speaker_filter=speaker)
+        search_payload = search_quotes(q, top_k=top_k, speaker_filter=speaker)
+        results = search_payload.get("results", [])
         
         # Log the search unless it's a test search
         if not test:
@@ -92,8 +96,29 @@ def search(
             
             log_search(q, top_k, ip, user_agent)
         
-        return {"query": q, "count": len(results), "results": results}
+        response = {
+            "query": q,
+            "count": len(results),
+            "results": results,
+            "search_type": search_payload.get("search_type", "none"),
+            "query_used": search_payload.get("query_used", q),
+            "original_query": search_payload.get("original_query", q),
+        }
+
+        if "message" in search_payload:
+            response["message"] = search_payload["message"]
+        if "suggested_query" in search_payload:
+            response["suggested_query"] = search_payload["suggested_query"]
+        if "suggested_results" in search_payload:
+            response["suggested_results"] = search_payload["suggested_results"]
+        if "suggestion_confidence" in search_payload:
+            response["suggestion_confidence"] = search_payload["suggestion_confidence"]
+        if "auto_corrected" in search_payload:
+            response["auto_corrected"] = search_payload["auto_corrected"]
+
+        return response
     except Exception as e:
+        logger.exception("Search failed for query '%s'", q)
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 @app.get("/api/health")

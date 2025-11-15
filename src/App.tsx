@@ -8,7 +8,7 @@ import EmptyState from './components/EmptyState'
 import Toast from './components/Toast'
 import Footer from './components/Footer'
 import Privacy from './components/Privacy'
-import { SearchResult, SearchState } from './types'
+import { SearchResult, SearchResponse, SearchState } from './types'
 import { searchQuotes, getStats } from './api'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 
@@ -18,6 +18,7 @@ function App() {
   const [query, setQuery] = useState('')
   const [speakerFilter, setSpeakerFilter] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
+  const [lastResponse, setLastResponse] = useState<SearchResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [clearSearchTrigger, setClearSearchTrigger] = useState(0)
 
@@ -50,16 +51,22 @@ function App() {
 
     setSearchState('loading')
     setError(null)
+    setLastResponse(null)
 
     try {
       const data = await searchQuotes(searchQuery, 10, speaker)
+      setLastResponse(data)
+      if (data.search_type === 'fuzzy' && data.query_used && data.query_used !== query) {
+        setQuery(data.query_used)
+      }
       setResults(data.results)
       setSearchState(data.results.length > 0 ? 'success' : 'empty')
     } catch (err) {
+      setLastResponse(null)
       setError(err instanceof Error ? err.message : 'Search failed')
       setSearchState('error')
     }
-  }, [])
+  }, [query])
 
   // Keyboard shortcuts
   const { searchInputRef } = useKeyboardShortcuts()
@@ -75,6 +82,7 @@ function App() {
     setSpeakerFilter('')
     setResults([])
     setError(null)
+    setLastResponse(null)
     setClearSearchTrigger(prev => prev + 1)
   }
 
@@ -83,6 +91,11 @@ function App() {
     if (query.trim()) {
       handleSearch(query, speaker)
     }
+  }
+
+  const handleSuggestionClick = (suggestedQuery: string) => {
+    setQuery(suggestedQuery)
+    handleSearch(suggestedQuery, speakerFilter)
   }
 
   const clearError = () => setError(null)
@@ -108,6 +121,7 @@ function App() {
               onSearch={handleSearchSubmit}
               placeholder="Enter a quote to search for..."
               clearTrigger={clearSearchTrigger}
+              presetQuery={query}
             />
             <SpeakerFilter 
               value={speakerFilter}
@@ -119,10 +133,31 @@ function App() {
 
           <div aria-live="polite" aria-atomic="false">
             {searchState === 'loading' && <LoadingSkeleton />}
-            {searchState === 'success' && (
-              <ResultsList results={results} />
+            {searchState === 'success' && lastResponse && (
+              <div className="space-y-4">
+                {lastResponse.message && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <p>{lastResponse.message}</p>
+                    {lastResponse.search_type === 'fuzzy' && lastResponse.query_used !== lastResponse.original_query && (
+                      <p className="mt-1 text-amber-800">
+                        Showing results for "<span className="font-medium">{lastResponse.query_used}</span>"
+                      </p>
+                    )}
+                  </div>
+                )}
+                <ResultsList results={results} />
+              </div>
             )}
-            {searchState === 'empty' && <EmptyState query={query} />}
+            {searchState === 'empty' && (
+              <EmptyState 
+                query={query}
+                message={lastResponse?.message}
+                searchType={lastResponse?.search_type}
+                suggestedQuery={lastResponse?.suggested_query}
+                suggestedResults={lastResponse?.suggested_results}
+                onSuggestionSelect={handleSuggestionClick}
+              />
+            )}
           </div>
         </div>
       </div>

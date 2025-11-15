@@ -1,6 +1,10 @@
 # Railway configuration for XFM Quote Finder
 [build]
 builder = "nixpacks"
+providers = ["node", "python"]
+
+[build.env]
+NIXPACKS_PYTHON_VERSION = "3.11"
 
 [deploy]
 startCommand = "./start.sh"
