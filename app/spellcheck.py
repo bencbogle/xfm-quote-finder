@@ -73,7 +73,7 @@ def get_suggestions(query: str, max_distance: int = 2, max_suggestions: int = 3)
 
     suggestions = symspell.lookup_compound(
         normalized_query,
-        max_dictionary_edit_distance=max_distance,
+        max_distance,
     )
 
     if not suggestions:
