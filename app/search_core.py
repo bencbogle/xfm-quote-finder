@@ -230,16 +230,17 @@ def _build_suggestion_payload(
         if normalized_query == normalized_term:
             continue
         suggestion_results = _run_exact_search(conn, suggestion.term, top_k, speaker_filter)
-        return {
-            "results": [],
-            "search_type": "suggestion",
-            "query_used": query,
-            "original_query": query,
-            "message": f"Did you mean '{suggestion.term}'?",
-            "suggested_query": suggestion.term,
-            "suggested_results": suggestion_results,
-            "suggestion_confidence": suggestion.confidence,
-        }
+        if suggestion_results:
+            return {
+                "results": [],
+                "search_type": "suggestion",
+                "query_used": query,
+                "original_query": query,
+                "message": f"Did you mean '{suggestion.term}'?",
+                "suggested_query": suggestion.term,
+                "suggested_results": suggestion_results,
+                "suggestion_confidence": suggestion.confidence,
+            }
     return None
 
 
