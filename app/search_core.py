@@ -180,6 +180,7 @@ def _run_fuzzy_fallback(
     top_k: int,
     speaker_filter: Optional[str],
 ) -> Optional[SearchPayload]:
+    # Try distance=1 first (most confident)
     suggestions = get_suggestions(query, max_distance=1, max_suggestions=3)
     for suggestion in suggestions:
         if not _should_auto_accept(query, suggestion):
@@ -195,6 +196,24 @@ def _run_fuzzy_fallback(
                 "auto_corrected": True,
                 "suggestion_confidence": suggestion.confidence,
             }
+    
+    # If distance=1 didn't yield results, try distance=2 (but require higher confidence)
+    suggestions = get_suggestions(query, max_distance=2, max_suggestions=3)
+    for suggestion in suggestions:
+        # Only accept distance=2 if distance=1 didn't work and confidence is high
+        if suggestion.distance > 1 and suggestion.confidence >= 0.8:
+            results = _run_exact_search(conn, suggestion.term, top_k, speaker_filter)
+            if results:
+                return {
+                    "results": results,
+                    "search_type": "fuzzy",
+                    "query_used": suggestion.term,
+                    "original_query": query,
+                    "message": f"Showing approximate matches for '{suggestion.term}'",
+                    "auto_corrected": True,
+                    "suggestion_confidence": suggestion.confidence,
+                }
+    
     return None
 
 

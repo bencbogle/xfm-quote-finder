@@ -71,17 +71,27 @@ def get_suggestions(query: str, max_distance: int = 2, max_suggestions: int = 3)
     symspell = _get_symspell()
     normalized_query = normalize_query(query)
 
-    suggestions = symspell.lookup_compound(
-        normalized_query,
-        max_distance,
-    )
-
-    if not suggestions:
+    # For single-word queries, use direct lookup for better suggestions
+    # For multi-word queries, use lookup_compound
+    words = normalized_query.split()
+    if len(words) == 1:
         suggestions = symspell.lookup(
             normalized_query,
-            Verbosity.CLOSEST,
+            Verbosity.ALL,
             max_distance,
         )
+    else:
+        suggestions = symspell.lookup_compound(
+            normalized_query,
+            max_distance,
+        )
+        # Fallback to direct lookup if compound doesn't yield results
+        if not suggestions:
+            suggestions = symspell.lookup(
+                normalized_query,
+                Verbosity.CLOSEST,
+                max_distance,
+            )
 
     ranked: List[SpellSuggestion] = []
     query_length = max(len(normalized_query), 1)
