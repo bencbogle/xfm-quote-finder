@@ -35,9 +35,13 @@ def test_search(query: str, speaker: str = None, top_k: int = 10):
         from app.search_core import normalize_query
         query_normalized = normalize_query(query)
         
-        results = search_quotes(query, top_k=top_k, speaker_filter=speaker)
+        payload = search_quotes(query, top_k=top_k, speaker_filter=speaker)
+        results = payload.get("results", [])
         
         if not results:
+            message = payload.get("message")
+            if message:
+                print(message)
             print("❌ No results found.")
             return
         
@@ -105,7 +109,8 @@ def run_test_suite():
         print(f"Test: {description}")
         print(f"{'─'*80}")
         try:
-            results = search_quotes(query, top_k=5, speaker_filter=speaker)
+            payload = search_quotes(query, top_k=5, speaker_filter=speaker)
+            results = payload.get("results", [])
             if results:
                 print(f"✅ Passed: Found {len(results)} result(s)")
                 print(f"   Top result: \"{results[0]['text'][:60]}...\"")

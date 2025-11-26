@@ -4,10 +4,11 @@ interface SearchBarProps {
   onSearch: (query: string) => void
   placeholder?: string
   clearTrigger?: number
+  presetQuery?: string
 }
 
 const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
-  ({ onSearch, placeholder = "Search quotes...", clearTrigger }, ref) => {
+  ({ onSearch, placeholder = "Search quotes...", clearTrigger, presetQuery }, ref) => {
     const [query, setQuery] = useState('')
 
     // Clear the search bar when clearTrigger changes
@@ -16,6 +17,12 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
         setQuery('')
       }
     }, [clearTrigger])
+
+    useEffect(() => {
+      if (presetQuery !== undefined) {
+        setQuery(presetQuery)
+      }
+    }, [presetQuery])
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()

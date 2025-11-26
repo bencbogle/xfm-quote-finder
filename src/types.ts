@@ -8,12 +8,23 @@ export interface SearchResult {
   speaker: string
   text: string
   spotify_url: string
+  rank?: number
 }
+
+export type SearchType = 'exact' | 'fuzzy' | 'suggestion' | 'none'
 
 export interface SearchResponse {
   query: string
+  query_used: string
+  original_query: string
   count: number
   results: SearchResult[]
+  search_type: SearchType
+  message?: string
+  suggested_query?: string
+  suggested_results?: SearchResult[]
+  suggestion_confidence?: number
+  auto_corrected?: boolean
 }
 
 export interface Stats {
