@@ -56,7 +56,7 @@ function App() {
     try {
       const data = await searchQuotes(searchQuery, 10, speaker)
       setLastResponse(data)
-      if (data.search_type === 'fuzzy' && data.query_used && data.query_used !== query) {
+      if (data.search_type === 'fuzzy' && data.query_used && data.query_used !== searchQuery) {
         setQuery(data.query_used)
       }
       setResults(data.results)
@@ -66,7 +66,7 @@ function App() {
       setError(err instanceof Error ? err.message : 'Search failed')
       setSearchState('error')
     }
-  }, [query])
+  }, [])
 
   // Keyboard shortcuts
   const { searchInputRef } = useKeyboardShortcuts()
