@@ -60,7 +60,7 @@ def _run_exact_search(
                 id, episode_id, timestamp_sec, speaker, text,
                 episode_name, spotify_url
             FROM quotes
-            WHERE TRIM(REGEXP_REPLACE(REGEXP_REPLACE(LOWER(text), '[^a-z0-9 ]', ' ', 'g'), '\s+', ' ', 'g')) = :normalized_query_text
+            WHERE TRIM(REGEXP_REPLACE(REGEXP_REPLACE(LOWER(text), '[^a-z0-9 ]', ' ', 'g'), '\\s+', ' ', 'g')) = :normalized_query_text
             AND LENGTH(text) < 100
         """
         if speaker_filter:
